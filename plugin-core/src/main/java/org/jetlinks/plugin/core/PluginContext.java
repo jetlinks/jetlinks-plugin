@@ -1,5 +1,8 @@
 package org.jetlinks.plugin.core;
 
+import java.io.File;
+import java.util.Map;
+
 public interface PluginContext {
 
     PluginRegistry registry();
@@ -8,6 +11,11 @@ public interface PluginContext {
 
     PluginEnvironment environment();
 
-    Metrics metrics();
+    PluginMetrics metrics();
 
+    PluginScheduler scheduler();
+
+    File workDir();
+
+    Map<String,Object> configuration();
 }

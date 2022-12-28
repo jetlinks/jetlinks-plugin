@@ -6,6 +6,8 @@ import java.util.Map;
 
 public interface PluginCommand<R> extends Serializable {
 
+    String getId();
+
     PluginCommand<R> with(String key, Object value);
 
     PluginCommand<R> with(Map<String, Object> properties);

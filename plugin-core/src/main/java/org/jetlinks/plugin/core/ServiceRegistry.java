@@ -1,16 +1,16 @@
 package org.jetlinks.plugin.core;
 
-import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ServiceRegistry {
 
-    <T> Mono<T> getService(Class<T> type);
+    <T> Optional<T> getService(Class<T> type);
 
-    <T> Mono<T> getService(Class<T> type, String name);
+    <T> Optional<T> getService(Class<T> type, String name);
 
-    <T> Mono<List<T>> getServices(Class<T> type);
+    <T> List<T> getServices(Class<T> type);
 
 
 }

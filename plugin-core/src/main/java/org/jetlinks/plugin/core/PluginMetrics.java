@@ -1,8 +1,6 @@
 package org.jetlinks.plugin.core;
 
-import java.time.Duration;
-
-public interface Metrics {
+public interface PluginMetrics {
 
     void count(String operation, int inc);
 

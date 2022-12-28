@@ -1,9 +1,11 @@
 package org.jetlinks.plugin.core;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
+import java.util.function.BiConsumer;
 
 /**
  * 插件实例接口
@@ -70,6 +72,8 @@ public interface Plugin extends Wrapper {
      * @return 命令信息
      */
     Flux<Description> getSupportCommands();
+
+    Disposable doOnSateChanged(BiConsumer<PluginState,PluginState> listener);
 
     default Flux<ByteBuffer> getResource(String name) {
         return Flux.empty();
