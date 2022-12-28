@@ -41,8 +41,9 @@ public abstract class AbstractPlugin implements Plugin {
         resources.put(name, supplier);
     }
 
-    protected void registerCommand(String id, CommandHandler<?, PluginCommand<?>> commandHandler) {
-        handlers.put(id, commandHandler);
+    @SuppressWarnings("all")
+    protected <R,C extends PluginCommand<R>> void registerCommand(String id, CommandHandler<R, C> commandHandler) {
+        handlers.put(id, (CommandHandler)commandHandler);
     }
 
     protected PluginContext context() {

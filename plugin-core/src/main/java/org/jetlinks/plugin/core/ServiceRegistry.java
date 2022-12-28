@@ -6,6 +6,12 @@ import java.util.Optional;
 
 public interface ServiceRegistry {
 
+    default <T> T getServiceNow(Class<T> type) {
+        return getService(type)
+                .orElseThrow(() -> new UnsupportedOperationException("unsupported service:" + type.getSimpleName()));
+    }
+
+
     <T> Optional<T> getService(Class<T> type);
 
     <T> Optional<T> getService(Class<T> type, String name);

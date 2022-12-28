@@ -10,6 +10,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <modules>
         <module>plugin-core</module>
+        <module>plugin-internal</module>
     </modules>
 
     <name>JetLinks Plugin</name>
@@ -52,6 +53,7 @@
         <project.build.jdk>${java.version}</project.build.jdk>
         <reactor.version>2020.0.14</reactor.version>
         <slf4j.version>1.7.36</slf4j.version>
+        <jetlinks.core.version>1.2.0-SNAPSHOT</jetlinks.core.version>
     </properties>
 
     <dependencies>
@@ -71,6 +73,12 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jetlinks</groupId>
+                <artifactId>jetlinks-core</artifactId>
+                <version>${jetlinks.core.version}</version>
             </dependency>
 
             <dependency>
