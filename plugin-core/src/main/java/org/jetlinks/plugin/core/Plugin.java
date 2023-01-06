@@ -73,7 +73,15 @@ public interface Plugin extends Wrapper {
      */
     Flux<Description> getSupportCommands();
 
-    Disposable doOnSateChanged(BiConsumer<PluginState,PluginState> listener);
+    Disposable doOnSateChanged(BiConsumer<PluginState, PluginState> listener);
+
+    default Disposable doOnStop(Disposable disposable) {
+        return doOnSateChanged((before, after) -> {
+            if (after == PluginState.stopped) {
+                disposable.dispose();
+            }
+        });
+    }
 
     default Flux<ByteBuffer> getResource(String name) {
         return Flux.empty();

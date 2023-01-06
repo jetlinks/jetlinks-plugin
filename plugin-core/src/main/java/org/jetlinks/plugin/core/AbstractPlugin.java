@@ -74,7 +74,7 @@ public abstract class AbstractPlugin implements Plugin {
                 .doOnError(err -> changeState(PluginState.stopped));
     }
 
-    private Mono<Void> doStart() {
+    protected Mono<Void> doStart() {
         return Mono.empty();
     }
 
