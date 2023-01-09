@@ -14,17 +14,18 @@ import java.time.Duration;
 public interface PluginScheduler {
 
     /**
+     * @param name           任务名称,相同的任务请保证名称相同
      * @param job            异步任务
      * @param cronExpression cron表达式
      * @return Disposable
-     * @see PluginScheduler#interval(Mono, String, boolean)
+     * @see PluginScheduler#interval(String, Mono, String, boolean)
      */
-    default Disposable interval(Mono<Void> job, String cronExpression) {
-        return interval(job, cronExpression, true);
+    default Disposable interval(String name, Mono<Void> job, String cronExpression) {
+        return interval(name, job, cronExpression, true);
     }
 
-    default Disposable interval(Mono<Void> job, Duration interval) {
-        return interval(job, interval, true);
+    default Disposable interval(String name, Mono<Void> job, Duration interval) {
+        return interval(name, job, interval, true);
     }
 
     /**
@@ -55,7 +56,7 @@ public interface PluginScheduler {
      * @param singleton      是否单例运行,为true时,集群下只有一个节点会执行
      * @return Disposable
      */
-    Disposable interval(Mono<Void> job, String cronExpression, boolean singleton);
+    Disposable interval(String name, Mono<Void> job, String cronExpression, boolean singleton);
 
     /**
      * 固定周期执行任务,可通过返回值{@link Disposable#dispose()}来取消任务
@@ -65,7 +66,7 @@ public interface PluginScheduler {
      * @param singleton 是否单例运行,为true时,集群下只有一个节点会执行
      * @return Disposable
      */
-    Disposable interval(Mono<Void> job, Duration interval, boolean singleton);
+    Disposable interval(String name, Mono<Void> job, Duration interval, boolean singleton);
 
     /**
      * 延迟执行任务,可通过返回值{@link Disposable#dispose()}来取消任务

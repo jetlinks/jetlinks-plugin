@@ -9,8 +9,15 @@ import org.jetlinks.plugin.internal.InternalPluginType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Collections;
 
+/**
+ * 设备接入网关插件,用于自定义设备接入,如: 定时{@link PluginScheduler#interval(Mono, Duration)}主动采集设备数据等场景.
+ *
+ * @author zhouhao
+ * @since 1.0
+ */
 public abstract class DeviceGatewayPlugin extends AbstractPlugin {
 
     private final PluginDeviceGatewayService gatewayService;

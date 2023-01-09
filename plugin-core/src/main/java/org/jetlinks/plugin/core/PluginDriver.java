@@ -4,10 +4,13 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.Nonnull;
 
-public interface PluginProvider {
+public interface PluginDriver {
 
     @Nonnull
     Description getDescription();
+
+    @Nonnull
+    PluginType getType();
 
     @Nonnull
     Mono<Plugin> createPlugin(@Nonnull String pluginId,

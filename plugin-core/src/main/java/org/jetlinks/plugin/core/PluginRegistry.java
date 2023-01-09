@@ -5,8 +5,6 @@ import reactor.core.publisher.Mono;
 
 public interface PluginRegistry {
 
-    Flux<Description> getProviders();
-
     Mono<Plugin> getPlugin(String type, String pluginId);
 
     default Mono<Plugin> getPlugin(PluginType type, String pluginId) {
