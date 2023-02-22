@@ -73,16 +73,34 @@ public interface Plugin extends Wrapper {
      */
     Flux<Description> getSupportCommands();
 
+    /**
+     * 监听插件状态变更,通过调用返回值{@link Disposable#dispose()}取消监听
+     *
+     * @param listener 监听器: &lt;之前的状态,最新的状态&gt;
+     * @return Disposable
+     */
     Disposable doOnSateChanged(BiConsumer<PluginState, PluginState> listener);
 
-    default Disposable doOnStop(Disposable disposable) {
+    /**
+     * 监听停止事件
+     *
+     * @param listener 监听器
+     * @return Disposable
+     */
+    default Disposable doOnStop(Disposable listener) {
         return doOnSateChanged((before, after) -> {
             if (after == PluginState.stopped) {
-                disposable.dispose();
+                listener.dispose();
             }
         });
     }
 
+    /**
+     * 获取插件资源,如文件等
+     *
+     * @param name 资源名称
+     * @return 文件字节缓存流
+     */
     default Flux<ByteBuffer> getResource(String name) {
         return Flux.empty();
     }

@@ -28,5 +28,11 @@
             <groupId>org.jetlinks</groupId>
             <artifactId>jetlinks-core</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.hswebframework</groupId>
+            <artifactId>hsweb-easy-orm-rdb</artifactId>
+            <version>4.1.0</version>
+        </dependency>
     </dependencies>
 </project>

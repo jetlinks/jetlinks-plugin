@@ -89,7 +89,7 @@ public abstract class AbstractPlugin implements Plugin {
     }
 
     @Override
-    public Mono<Void> shutdown() {
+    public final Mono<Void> shutdown() {
         changeState(PluginState.stopped);
         return doShutdown();
     }

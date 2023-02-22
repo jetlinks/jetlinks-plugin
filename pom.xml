@@ -11,6 +11,7 @@
     <modules>
         <module>plugin-core</module>
         <module>plugin-internal</module>
+        <module>plugin-examples</module>
     </modules>
 
     <name>JetLinks Plugin</name>
@@ -53,7 +54,7 @@
         <project.build.jdk>${java.version}</project.build.jdk>
         <reactor.version>2020.0.14</reactor.version>
         <slf4j.version>1.7.36</slf4j.version>
-        <jetlinks.core.version>1.2.0-SNAPSHOT</jetlinks.core.version>
+        <jetlinks.core.version>1.2.1-SNAPSHOT</jetlinks.core.version>
     </properties>
 
     <dependencies>
@@ -166,6 +167,14 @@
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>2.7.8</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.slf4j</groupId>
