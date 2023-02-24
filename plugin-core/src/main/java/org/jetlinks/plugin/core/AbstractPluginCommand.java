@@ -1,10 +1,15 @@
 package org.jetlinks.plugin.core;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@Getter
+@Setter
 public abstract class AbstractPluginCommand<R> implements PluginCommand<R>, Serializable {
     private static final long serialVersionUID = 1L;
 
