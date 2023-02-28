@@ -22,12 +22,11 @@ public interface PluginDriver {
     Mono<? extends Plugin> createPlugin(@Nonnull String pluginId,
                                         @Nonnull PluginContext context);
 
-    default Flux<ByteBuffer> getResource(String name) {
+    default Flux<DataBuffer> getResource(String name) {
         return DataBufferUtils
                 .read(new ClassPathResource(name,
                                             this.getClass().getClassLoader()),
                       new DefaultDataBufferFactory(),
-                      4096)
-                .map(DataBuffer::asByteBuffer);
+                      4096);
     }
 }
