@@ -1,5 +1,9 @@
 package org.jetlinks.plugin.core;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +23,11 @@ public interface PluginDriver {
                                         @Nonnull PluginContext context);
 
     default Flux<ByteBuffer> getResource(String name) {
-        return Flux.empty();
+        return DataBufferUtils
+                .read(new ClassPathResource(name,
+                                            this.getClass().getClassLoader()),
+                      new DefaultDataBufferFactory(),
+                      4096)
+                .map(DataBuffer::asByteBuffer);
     }
 }
