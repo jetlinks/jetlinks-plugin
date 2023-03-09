@@ -1,0 +1,313 @@
+{
+  "events": [],
+  "properties": [
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byAddress",
+      "name": "串口地址",
+      "sortsIndex": 14
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byOutputDataType",
+      "name": "输出类型",
+      "sortsIndex": 13
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byMode",
+      "name": "模式",
+      "sortsIndex": 12
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "bySerialType",
+      "name": "串口类型",
+      "sortsIndex": 11
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byChannel",
+      "name": "485通道号",
+      "sortsIndex": 10
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byWorkMode",
+      "name": "工作模式",
+      "sortsIndex": 9
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byDuplex",
+      "name": "半双工/全双工",
+      "sortsIndex": 8
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byFlowcontrol",
+      "name": "是否流控",
+      "sortsIndex": 7
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byParity",
+      "name": "校验位",
+      "sortsIndex": 6
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byStopBit",
+      "name": "停止位",
+      "sortsIndex": 5
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "byDataBit",
+      "name": "数据位数",
+      "sortsIndex": 4
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "dwBaudRate",
+      "name": "波特率",
+      "sortsIndex": 3
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "wDeviceProtocol",
+      "name": "前端设备协议",
+      "sortsIndex": 2
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "wDeviceType",
+      "name": "前端设备类型",
+      "sortsIndex": 1
+    },
+    {
+      "valueType": {
+        "type": "string",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "sDeviceName",
+      "name": "前端设备名称",
+      "sortsIndex": 0
+    }
+  ],
+  "functions": [
+    {
+      "inputs": [
+        {
+          "valueType": {
+            "expands": {},
+            "type": "int"
+          },
+          "id": "wYear",
+          "name": "年"
+        },
+        {
+          "valueType": {
+            "expands": {},
+            "type": "int"
+          },
+          "id": "byMonth",
+          "name": "月"
+        }
+      ],
+      "output": {
+        "type": "array",
+        "expands": {},
+        "properties": [
+          {}
+        ],
+        "elementType": {
+          "expands": {},
+          "type": "int"
+        }
+      },
+      "id": "monthly_record",
+      "name": "月历录像查询",
+      "async": false,
+      "sortsIndex": 0
+    }
+  ],
+  "tags": []
+}
