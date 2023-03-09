@@ -1,5 +1,6 @@
 package org.jetlinks.plugin.core;
 
+import org.jetlinks.core.Wrapper;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -8,9 +9,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nonnull;
-import java.nio.ByteBuffer;
 
-public interface PluginDriver {
+public interface PluginDriver extends Wrapper {
 
     @Nonnull
     Description getDescription();
