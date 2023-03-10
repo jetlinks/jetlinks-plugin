@@ -26,7 +26,6 @@ import org.jetlinks.core.metadata.types.PasswordType;
 import org.jetlinks.core.metadata.types.StringType;
 import org.jetlinks.plugin.core.PluginContext;
 import org.jetlinks.plugin.example.sdk.hc.NetSDKDemo;
-import org.jetlinks.plugin.internal.PluginDataIdMapper;
 import org.jetlinks.plugin.internal.device.DeviceGatewayPlugin;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -55,8 +54,6 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
     private static final NetSDKDemo sdk = new NetSDKDemo();
     public static final Map<String, PluginProduct> pluginProducts = new HashMap<>();
 
-    private final PluginDataIdMapper idMapper;
-
     static {
         PluginProductRS485 media = new PluginProductRS485();
         pluginProducts.put(media.getId(), media);
@@ -69,9 +66,6 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
                            PluginContext context) {
         super(id, context);
         sdk.initMockSDKInstance();
-        idMapper = context
-                .services()
-                .getServiceNow(PluginDataIdMapper.class);
     }
 
     @Override
@@ -212,8 +206,6 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
                 .getProduct()
                 // 内部产品ID
                 .map(DeviceProductOperator::getId)
-                // 获取外部产品ID
-                .flatMap(productId -> idMapper.getExternalId(PluginDataIdMapper.TYPE_PRODUCT, getId(), productId))
                 .doOnNext(id -> log.info("plugin id: {}", id))
                 .mapNotNull(pluginProducts::get);
     }
