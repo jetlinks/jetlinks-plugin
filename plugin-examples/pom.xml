@@ -13,6 +13,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>http-api-device</module>
+        <module>hc-net-sdk</module>
     </modules>
 
 

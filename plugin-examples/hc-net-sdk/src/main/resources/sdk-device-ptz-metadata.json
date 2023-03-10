@@ -1,0 +1,73 @@
+{
+  "events": [],
+  "properties": [
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "wZoomPos",
+      "name": "变倍参数",
+      "sortsIndex": 2
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "wTiltPos",
+      "name": "垂直参数",
+      "sortsIndex": 1
+    },
+    {
+      "valueType": {
+        "type": "int",
+        "expands": {}
+      },
+      "expands": {
+        "source": "device",
+        "type": [
+          "read",
+          "write",
+          "report"
+        ],
+        "metrics": []
+      },
+      "id": "wPanPos",
+      "name": "水平参数",
+      "sortsIndex": 0
+    }
+  ],
+  "functions": [
+    {
+      "inputs": [],
+      "output": {
+        "type": null,
+        "expands": {}
+      },
+      "id": "regular_inspection",
+      "name": "定时巡检设备",
+      "async": true,
+      "sortsIndex": 0
+    }
+  ],
+  "tags": []
+}
