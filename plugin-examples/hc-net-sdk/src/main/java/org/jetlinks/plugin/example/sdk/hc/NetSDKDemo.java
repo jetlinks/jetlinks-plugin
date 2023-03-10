@@ -12,8 +12,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jetlinks.plugin.example.sdk.hc.HCNetSDK.NET_DVR_SET_ALARM_RS485CFG;
-
 /**
  * @create 2020-07-27-10:42
  */
@@ -24,6 +22,7 @@ public class NetSDKDemo {
     public static dev_work_state_cb                             workStateCb;
     public static FExceptionCallBack_Imp                        fExceptionCallBack;
     public static Map<Integer, HCNetSDK.NET_DVR_ALARM_RS485CFG> rs485cfg = new HashMap<>();
+    public static Map<Integer, HCNetSDK.NET_DVR_PTZPOS>         ptzcfg   = new HashMap<>();
 
     static class dev_work_state_cb implements HCNetSDK.DEV_WORK_STATE_CB {
         public boolean invoke(Pointer pUserdata,
@@ -367,7 +366,10 @@ public class NetSDKDemo {
     }
 
     //月历录像查询
-    public byte[] GetRecMonth(int iUserID, int year, int month, int dwChannel) {
+    public byte[] GetRecMonth(int iUserID,
+                              int year,
+                              int month,
+                              int dwChannel) {
         HCNetSDK.NET_DVR_MRD_SEARCH_PARAM struMrdSeaParam = new HCNetSDK.NET_DVR_MRD_SEARCH_PARAM();
         struMrdSeaParam.read();
         struMrdSeaParam.dwSize = struMrdSeaParam.size();
@@ -422,42 +424,47 @@ public class NetSDKDemo {
     }
 
     //球机PTZ参数获取设置
-    public static void SetPTZcfg(int iUserID) {
-        HCNetSDK.NET_DVR_PTZPOS struPtTZPos = new HCNetSDK.NET_DVR_PTZPOS();
-        IntByReference pUsers = new IntByReference(1);
-        boolean b_GetPTZ = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_PTZPOS, 1, struPtTZPos.getPointer(), struPtTZPos.size(), pUsers);
-        if (b_GetPTZ == false) {
-            System.out.println("获取PTZ坐标信息失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
-        } else {
-            struPtTZPos.read();
-            int wPanPos = Integer.parseInt(Integer.toHexString(struPtTZPos.wPanPos).trim());
-            float WPanPos = wPanPos * 0.1f;
-            int wTiltPos = Integer.parseInt(Integer.toHexString(struPtTZPos.wTiltPos).trim());
-            float WTiltPos = wTiltPos * 0.1f;
-            int wZoomPos = Integer.parseInt(Integer.toHexString(struPtTZPos.wZoomPos).trim());
-            float WZoomPos = wZoomPos * 0.1f;
-            System.out.println("P参数：" + WPanPos + "\n");
-            System.out.println("T参数：" + wTiltPos + "\n");
-            System.out.println("Z参数：" + wZoomPos + "\n");
-        }
+    public boolean SetPTZcfg(int iUserID,
+                             HCNetSDK.NET_DVR_PTZPOS struPtTZPos) {
+        int wPanPos = Integer.parseInt(Integer.toHexString(struPtTZPos.wPanPos).trim());
+        float WPanPos = wPanPos * 0.1f;
+        int wTiltPos = Integer.parseInt(Integer.toHexString(struPtTZPos.wTiltPos).trim());
+        float WTiltPos = wTiltPos * 0.1f;
+        int wZoomPos = Integer.parseInt(Integer.toHexString(struPtTZPos.wZoomPos).trim());
+        float WZoomPos = wZoomPos * 0.1f;
+        System.out.println("P参数：" + WPanPos + "\n");
+        System.out.println("T参数：" + WTiltPos + "\n");
+        System.out.println("Z参数：" + WZoomPos + "\n");
+
         struPtTZPos.wAction = 2;
         //本结构体中的wAction参数是设置时的操作类型，因此获取时该参数无效。实际显示的PTZ值是获取到的十六进制值的十分之一，
         // 如获取的水平参数P的值是0x1750，实际显示的P值为175度；获取到的垂直参数T的值是0x0789，实际显示的T值为78.9度，如果T未负值，获取的值减去360
         // 获取到的变倍参数Z的值是0x1100，实际显示的Z值为110倍。
 //        String pHex="13669";
 //        int pInter=Integer.parseInt(pHex);
-        short pInter = 13669;
-        System.out.println(pInter);
-        struPtTZPos.wPanPos = (short) pInter;
         struPtTZPos.write();
         boolean b_SetPTZ = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_PTZPOS, 1, struPtTZPos.getPointer(), struPtTZPos.size());
-        if (b_GetPTZ == false) {
+        if (b_SetPTZ == false) {
             System.out.println("设置PTZ坐标信息失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         } else {
-
             System.out.println("设置PTZ成功");
         }
+        ptzcfg.put(iUserID, struPtTZPos);
+        return b_SetPTZ;
 
+    }
+
+    public HCNetSDK.NET_DVR_PTZPOS GetPTZcfg(int iUserID) {
+        HCNetSDK.NET_DVR_PTZPOS cfg = ptzcfg.compute(iUserID, (userId, struPtTZPos) -> {
+            if (struPtTZPos == null) {
+                struPtTZPos = new HCNetSDK.NET_DVR_PTZPOS();
+                IntByReference pUsers = new IntByReference(1);
+                boolean b_GetPTZ = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_PTZPOS, 1, struPtTZPos.getPointer(), struPtTZPos.size(), pUsers);
+            }
+            return struPtTZPos;
+        });
+
+        return cfg;
     }
 
     //获取(设置)前端参数(扩展)
@@ -538,7 +545,7 @@ public class NetSDKDemo {
     }
 
     //定时巡检设备
-    public static void regularInspection() {
+    public void regularInspection() {
         HCNetSDK.NET_DVR_CHECK_DEV_STATE struCheckStatus = new HCNetSDK.NET_DVR_CHECK_DEV_STATE();
         struCheckStatus.read();
         struCheckStatus.dwTimeout = 1000; //定时检测设备工作状态，单位：ms，0表示使用默认值(30000)，最小值为1000
@@ -696,14 +703,11 @@ public class NetSDKDemo {
 
     public boolean setRS485Cfg(int iUserID,
                                HCNetSDK.NET_DVR_ALARM_RS485CFG cfg) {
-        rs485cfg.compute(iUserID, (userId, rs485cfg) -> {
-            cfg.dwSize = cfg.size();
-            Pointer pointer = cfg.getPointer();
-            cfg.write();
-            boolean success = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_ALARM_RS485CFG, 3, pointer, cfg.dwSize);
-            return cfg;
-        });
-
+        cfg.dwSize = cfg.size();
+        Pointer pointer = cfg.getPointer();
+        cfg.write();
+        boolean success = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_ALARM_RS485CFG, 3, pointer, cfg.dwSize);
+        rs485cfg.put(iUserID, cfg);
         return true;
     }
 
@@ -744,23 +748,6 @@ public class NetSDKDemo {
 
         //启用SDK写日志
         hCNetSDK.NET_DVR_SetLogToFile(3, "..\\sdkLog", false);
-
-
-        //登录设备，每一台设备只需要登录一次
-//        TestDemo.SetPTZcfg(lUserID);
-//        TestDemo.getAESInfo(lUserID);
-//        TestDemo.getRS485Cfg(lUserID);
-//        TestDemo.getRS485SlotInfo(lUserID);
-//        TestDemo.getIPChannelInfo(lUserID);
-//        Thread.sleep(2000);
-//        //程序退出的时候调用注销登录接口，每一台设备分别调用一次
-//        if (hCNetSDK.NET_DVR_Logout(lUserID)) {
-//            System.out.println("注销成功");
-//        }
-//        //释放SDK资源，程序退出时调用，只需要调用一次
-//        hCNetSDK.NET_DVR_Cleanup();
-//        return;
-
 
         return true;
     }

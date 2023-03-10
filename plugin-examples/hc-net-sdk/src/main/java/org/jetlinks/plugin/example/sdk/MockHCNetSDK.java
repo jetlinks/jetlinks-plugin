@@ -1701,6 +1701,18 @@ public class MockHCNetSDK implements HCNetSDK {
             // 串口地址
             lpOutBuffer.setByte(++offset, cfg.byAddress);
 
+        } else if (dwCommand == NET_DVR_GET_PTZPOS) {
+            NET_DVR_PTZPOS cfg = new NET_DVR_PTZPOS();
+            cfg.wPanPos = (short) 50;
+            cfg.wTiltPos = (short) 10;
+            cfg.wZoomPos = (short) 200;
+
+            int offset = 2;
+            lpOutBuffer.setShort(offset, cfg.wPanPos);
+            offset += 2;
+            lpOutBuffer.setShort(offset, cfg.wTiltPos);
+            offset += 2;
+            lpOutBuffer.setShort(offset, cfg.wZoomPos);
         }
         return true;
     }
@@ -1747,6 +1759,13 @@ public class MockHCNetSDK implements HCNetSDK {
             lpInBuffer.getByte(++offset);
             // 串口地址
             lpInBuffer.getByte(++offset);
+        } else if (dwCommand == NET_DVR_SET_PTZPOS) {
+            int offset = 2;
+            lpInBuffer.getShort(offset);
+            offset += 2;
+            lpInBuffer.getShort(offset);
+            offset += 2;
+            lpInBuffer.getShort(offset);
         }
         return true;
     }

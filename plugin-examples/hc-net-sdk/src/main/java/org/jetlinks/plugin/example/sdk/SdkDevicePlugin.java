@@ -10,10 +10,12 @@ import org.hswebframework.web.exception.BusinessException;
 import org.jetlinks.core.Value;
 import org.jetlinks.core.config.ConfigKey;
 import org.jetlinks.core.device.DeviceOperator;
+import org.jetlinks.core.device.DeviceProductOperator;
 import org.jetlinks.core.message.DeviceMessage;
 import org.jetlinks.core.message.DeviceOfflineMessage;
 import org.jetlinks.core.message.DeviceOnlineMessage;
 import org.jetlinks.core.message.function.FunctionInvokeMessage;
+import org.jetlinks.core.message.function.FunctionParameter;
 import org.jetlinks.core.message.property.ReadPropertyMessage;
 import org.jetlinks.core.message.property.ReportPropertyMessage;
 import org.jetlinks.core.message.property.WritePropertyMessage;
@@ -23,21 +25,17 @@ import org.jetlinks.core.metadata.DeviceConfigScope;
 import org.jetlinks.core.metadata.types.PasswordType;
 import org.jetlinks.core.metadata.types.StringType;
 import org.jetlinks.plugin.core.PluginContext;
-import org.jetlinks.plugin.example.sdk.hc.HCNetSDK;
 import org.jetlinks.plugin.example.sdk.hc.NetSDKDemo;
+import org.jetlinks.plugin.internal.PluginDataIdMapper;
 import org.jetlinks.plugin.internal.device.DeviceGatewayPlugin;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 输入描述.
@@ -47,50 +45,69 @@ import java.util.Map;
 @Slf4j
 public class SdkDevicePlugin extends DeviceGatewayPlugin {
 
-    static final String IP          = "ip";
-    static final String PORT        = "port";
-    static final String USERNAME    = "user";
-    static final String PASSWORD    = "psw";
-    static final String USER_ID     = "user_id";
-    static final String DW_CHANNEL  = "dwChannel";
-    static final String FUNCTION_ID = "monthly_record";
+    static final String IP       = "ip";
+    static final String PORT     = "port";
+    static final String USERNAME = "user";
+    static final String PASSWORD = "psw";
+    static final String USER_ID  = "user_id";
 
-    static final ConfigKey<Boolean> required = ConfigKey.of("required", "是否必填", Boolean.TYPE);
-
-    static final ConfigMetadata deviceConfigMetadata = new DefaultConfigMetadata("设备配置", "设备接入配置")
-            .add(DW_CHANNEL, "通道号", new StringType(), DeviceConfigScope.device)
-            .add(USERNAME, "用户名", new StringType().expand(required.value(true)), DeviceConfigScope.device)
-            .add(PASSWORD, "密码", new PasswordType().expand(required.value(true)), DeviceConfigScope.device);
-
-    static final ConfigMetadata productConfigMetadata = new DefaultConfigMetadata("产品配置", "设备接入配置")
-            .add(DW_CHANNEL, "通道号", new StringType(), DeviceConfigScope.product);
-
+    public static final ConfigKey<Boolean> required = ConfigKey.of("required", "是否必填", Boolean.TYPE);
     private static final NetSDKDemo sdk = new NetSDKDemo();
+    public static final Map<String, PluginProduct> pluginProducts = new HashMap<>();
+
+    private final PluginDataIdMapper idMapper;
+
+    static {
+        PluginProductRS485 media = new PluginProductRS485();
+        pluginProducts.put(media.getId(), media);
+        PluginProductPTZ senser = new PluginProductPTZ();
+        pluginProducts.put(senser.getId(), senser);
+    }
+
 
     public SdkDevicePlugin(String id,
                            PluginContext context) {
         super(id, context);
         sdk.initMockSDKInstance();
+        idMapper = context
+                .services()
+                .getServiceNow(PluginDataIdMapper.class);
     }
 
     @Override
     public Mono<ConfigMetadata> getDeviceConfigMetadata(String productId) {
-        return Mono.just(deviceConfigMetadata);
+        return Mono
+                .justOrEmpty(pluginProducts.get(productId))
+                .mapNotNull(PluginProduct::getDeviceConfigMetadata)
+                .map(configMetadata -> ((DefaultConfigMetadata) configMetadata)
+                        .add(USERNAME, "用户名", new StringType().expand(required.value(true)), DeviceConfigScope.device)
+                        .add(PASSWORD, "密码", new PasswordType().expand(required.value(true)), DeviceConfigScope.device))
+                .defaultIfEmpty(new DefaultConfigMetadata()
+                        .add(USERNAME, "用户名", new StringType().expand(required.value(true)), DeviceConfigScope.device)
+                        .add(PASSWORD, "密码", new PasswordType().expand(required.value(true)), DeviceConfigScope.device))
+                .cast(ConfigMetadata.class);
     }
 
     @Override
     public Mono<ConfigMetadata> getProductConfigMetadata(String productId) {
-        return Mono.just(productConfigMetadata);
+        return Mono
+                .justOrEmpty(pluginProducts.get(productId))
+                .mapNotNull(PluginProduct::getProductConfigMetadata);
+    }
+
+    @Override
+    public Mono<Byte> getDeviceState(DeviceOperator device) {
+        return this
+                .getUserId(device)
+                .map(sdk::getDeviceStatus)
+                .map(status -> status ? (byte) 1 : (byte) 0);
     }
 
     private Mono<Void> pollState() {
         return getPlatformDevices()
-                .flatMap(device -> this
-                        .getUserId(device)
-                        .map(userId -> Tuples.of(device.getId(), userId)))
                 .buffer(100)
-                .flatMap(list -> this
-                        .getDeviceState(list)
+                .flatMap(list -> Flux.fromIterable(list)
+                        .flatMap(this::getDeviceInfo)
                         .flatMap(this::handleState)
                         .onErrorResume(err -> {
                             log.warn("check device state error", err);
@@ -120,12 +137,18 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
         }
     }
 
-    public Flux<DeviceInfo> getDeviceState(List<Tuple2<String, Integer>> device) {
-        return Flux.fromIterable(device)
-                .map(tp2 -> new DeviceInfo(
-                        tp2.getT1(),
-                        sdk.getDeviceStatus(tp2.getT2()),
-                        getSdkProperties(tp2.getT2())));
+    public Mono<DeviceInfo> getDeviceInfo(DeviceOperator device) {
+        return Mono
+                .zip(
+                        Mono.just(device.getId()),
+                        this.getUserId(device),
+                        this.getPluginProduct(device)
+                )
+                .map(tp3 -> new DeviceInfo(
+                        tp3.getT1(),
+                        sdk.getDeviceStatus(tp3.getT2()),
+                        tp3.getT3().getSdkProperties(tp3.getT2(), sdk)))
+                .switchIfEmpty(Mono.error(() -> new BusinessException("plugin device info not exist")));
     }
 
     /**
@@ -148,69 +171,51 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
                         .flatMap(userId -> device.setConfig(USER_ID, userId).thenReturn(userId)));
     }
 
-    private Mono<Map<String, Object>> getSdkProperties(String deviceId) {
-        return registry.getDevice(deviceId)
-                .flatMap(this::getUserId)
-                .map(this::getSdkProperties);
-    }
-
-    private Map<String, Object> getSdkProperties(Integer userId) {
-        Map<String, Object> properties = new HashMap<>();
-        HCNetSDK.NET_DVR_ALARM_RS485CFG rs485Cfg = sdk.getRS485Cfg(userId);
-        properties.put("dwSize", rs485Cfg.dwSize);
-        properties.put("sDeviceName", new String(rs485Cfg.sDeviceName));
-        properties.put("wDeviceType", rs485Cfg.wDeviceType);
-        properties.put("wDeviceProtocol", rs485Cfg.wDeviceProtocol);
-        properties.put("dwBaudRate", rs485Cfg.dwBaudRate);
-        properties.put("byDataBit", rs485Cfg.byDataBit);
-        properties.put("byStopBit", rs485Cfg.byStopBit);
-        properties.put("byParity", rs485Cfg.byParity);
-        properties.put("byFlowcontrol", rs485Cfg.byFlowcontrol);
-        properties.put("byDuplex", rs485Cfg.byDuplex);
-        properties.put("byWorkMode", rs485Cfg.byWorkMode);
-        properties.put("byChannel", rs485Cfg.byChannel);
-        properties.put("bySerialType", rs485Cfg.bySerialType);
-        properties.put("byMode", rs485Cfg.byMode);
-        properties.put("byOutputDataType", rs485Cfg.byOutputDataType);
-        properties.put("byAddress", rs485Cfg.byAddress);
-        properties.put("byRes", rs485Cfg.byRes);
-        return properties;
-    }
-
     private Mono<Boolean> setSdkProperties(String deviceId,
                                            Map<String, Object> properties) {
         return registry.getDevice(deviceId)
-                .flatMap(this::getUserId)
-                .map(userId -> setSdkProperties(userId, properties));
+                .flatMap(device -> Mono
+                        .zip(
+                                this.getUserId(device),
+                                this.getPluginProduct(device)
+                        ))
+                .map(tp2 -> tp2.getT2().setSdkProperties(tp2.getT1(), properties, sdk));
+
     }
 
-    private boolean setSdkProperties(int userId,
-                                     Map<String, Object> properties) {
-        try {
-            HCNetSDK.NET_DVR_ALARM_RS485CFG rs485Cfg = new HCNetSDK.NET_DVR_ALARM_RS485CFG();
-            rs485Cfg.dwSize = (int) properties.get("dwSize");
-            rs485Cfg.sDeviceName = properties.get("sDeviceName").toString().getBytes(StandardCharsets.UTF_8);
-            rs485Cfg.wDeviceType = (short) properties.get("wDeviceType");
-            rs485Cfg.wDeviceProtocol = (short) properties.get("wDeviceProtocol");
-            rs485Cfg.dwBaudRate = (int) properties.get("dwBaudRate");
-            rs485Cfg.byDataBit = (byte) properties.get("byDataBit");
-            rs485Cfg.byStopBit = (byte) properties.get("byStopBit");
-            rs485Cfg.byParity = (byte) properties.get("byParity");
-            rs485Cfg.byFlowcontrol = (byte) properties.get("byFlowcontrol");
-            rs485Cfg.byDuplex = (byte) properties.get("byDuplex");
-            rs485Cfg.byWorkMode = (byte) properties.get("byWorkMode");
-            rs485Cfg.byChannel = (byte) properties.get("byChannel");
-            rs485Cfg.bySerialType = (byte) properties.get("bySerialType");
-            rs485Cfg.byMode = (byte) properties.get("byMode");
-            rs485Cfg.byOutputDataType = (byte) properties.get("byOutputDataType");
-            rs485Cfg.byAddress = (byte) properties.get("byAddress");
-            rs485Cfg.byRes = (byte[]) properties.get("byRes");
+    private Mono<Object> invokeFunction(FunctionInvokeMessage message) {
+        return registry.getDevice(message.getDeviceId())
+                .flatMap(device -> Mono
+                        .zip(
+                                Mono.just(device),
+                                this.getUserId(device),
+                                this.getPluginProduct(device)
+                        ))
+                .flatMap(tp3 -> tp3
+                        .getT3()
+                        .invokeFunction(
+                                tp3.getT2(),
+                                message.getFunctionId(),
+                                tp3.getT1(),
+                                message.getInputs().stream()
+                                        .collect(Collectors.toMap(FunctionParameter::getName, FunctionParameter::getValue)),
+                                sdk));
+    }
 
-            return sdk.setRS485Cfg(userId, rs485Cfg);
-        } catch (Exception e) {
-            log.error("set sdk properties error", e);
-            return false;
-        }
+    /**
+     * 获取插件内部的产品信息
+     * @param device 设备操作
+     * @return 插件内部产品
+     */
+    private Mono<PluginProduct> getPluginProduct(DeviceOperator device) {
+        return device
+                .getProduct()
+                // 内部产品ID
+                .map(DeviceProductOperator::getId)
+                // 获取外部产品ID
+                .flatMap(productId -> idMapper.getExternalId(PluginDataIdMapper.TYPE_PRODUCT, getId(), productId))
+                .doOnNext(id -> log.info("plugin id: {}", id))
+                .mapNotNull(pluginProducts::get);
     }
 
     @Override
@@ -218,8 +223,10 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
 
         // 读取属性
         if (message instanceof ReadPropertyMessage) {
-            return this
-                    .getSdkProperties(message.getDeviceId())
+            return registry
+                    .getDevice(message.getDeviceId())
+                    .flatMap(this::getDeviceInfo)
+                    .map(DeviceInfo::getProperties)
                     .map(((ReadPropertyMessage) message).newReply()::success);
         }
         //修改属性
@@ -235,40 +242,9 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
             // 调用功能
         } else if (message instanceof FunctionInvokeMessage) {
             FunctionInvokeMessage functionInvokeMessage = ((FunctionInvokeMessage) message);
-            String deviceId = functionInvokeMessage.getDeviceId();
-            String function = functionInvokeMessage.getFunctionId();
-            if (FUNCTION_ID.equals(function)) {
-                return registry
-                        .getDevice(deviceId)
-                        .flatMap(device -> Mono
-                                .zip(
-                                        this.getUserId(device),
-                                        device.getSelfConfig(ConfigKey.of(DW_CHANNEL))
-                                                .map(Object::toString)
-                                                .map(Integer::valueOf)
-                                                .defaultIfEmpty(32)
-                                )
-                                .map(tp2 -> sdk.GetRecMonth(
-                                        tp2.getT1(),
-                                        functionInvokeMessage
-                                                .getInput("wYear")
-                                                .map(Object::toString)
-                                                .map(Integer::valueOf)
-                                                .orElse(LocalDate.now().getYear()),
-                                        functionInvokeMessage.getInput("byMonth")
-                                                .map(Object::toString)
-                                                .map(Integer::valueOf)
-                                                .orElse(LocalDate.now().getMonthValue()),
-                                        tp2.getT2()))
-                                .map(bytes -> {
-                                    int[] array = new int[bytes.length];
-                                    for (int i = 0; i < bytes.length; i++) {
-                                        array[i] = bytes[i];
-                                    }
-                                    return array;
-                                })
-                                .map(result -> functionInvokeMessage.newReply().success(result)));
-            }
+            return this
+                    .invokeFunction(functionInvokeMessage)
+                    .map(result -> functionInvokeMessage.newReply().success(result));
         }
 
         return super.execute(message);

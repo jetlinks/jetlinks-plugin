@@ -1,6 +1,5 @@
 package org.jetlinks.plugin.example.sdk;
 
-import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.jetlinks.core.metadata.DefaultConfigMetadata;
 import org.jetlinks.core.metadata.types.IntType;
@@ -12,16 +11,13 @@ import org.jetlinks.plugin.core.VersionRange;
 import org.jetlinks.plugin.internal.device.DeviceGatewayPlugin;
 import org.jetlinks.plugin.internal.device.DeviceGatewayPluginDriver;
 import org.jetlinks.plugin.internal.device.DeviceProduct;
-import org.jetlinks.supports.official.JetLinksDeviceMetadata;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.util.StreamUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nonnull;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+
+import static org.jetlinks.plugin.example.sdk.SdkDevicePlugin.pluginProducts;
 
 /**
  * 输入描述.
@@ -32,33 +28,6 @@ import java.util.Collections;
 public class SdkDevicePluginDriver implements DeviceGatewayPluginDriver {
 
     static Version version_1_0 = new Version(1, 0, 0, true);
-
-    static final DeviceProduct product;
-
-    public static String METADATA;
-
-    static {
-
-        try (
-                InputStream stream = new ClassPathResource(
-                        "sdk-device-metadata.json", SdkDevicePluginDriver.class.getClassLoader())
-                        .getInputStream()
-        ) {
-            // 从json文件中读取产品的默认物模型
-            METADATA = StreamUtils.copyToString(stream, StandardCharsets.UTF_8);
-        } catch (Throwable e) {
-            SdkDevicePluginDriver.log.warn("load metadata failed", e);
-        }
-    }
-
-    static {
-        product = new DeviceProduct();
-        product.setId("sdk-product-001");
-        product.setName("sdk产品001");
-        product.setDescription("sdk产品。以插件的方式接入");
-        JetLinksDeviceMetadata metadata = new JetLinksDeviceMetadata(JSON.parseObject(METADATA));
-        product.setMetadata(metadata);
-    }
 
     @Nonnull
     @Override
@@ -88,7 +57,9 @@ public class SdkDevicePluginDriver implements DeviceGatewayPluginDriver {
 
     @Override
     public Flux<DeviceProduct> getSupportProducts() {
-        return Flux.just(product);
+        return Flux
+                .fromIterable(pluginProducts.values())
+                .map(PluginProduct::getDeviceProduct);
     }
 
 }
