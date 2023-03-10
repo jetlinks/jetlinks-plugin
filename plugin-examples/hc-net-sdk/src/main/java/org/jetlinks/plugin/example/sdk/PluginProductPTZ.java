@@ -33,7 +33,7 @@ public class PluginProductPTZ implements PluginProduct {
     static {
         try (
                 InputStream stream = new ClassPathResource(
-                        "sdk-device-senser-metadata.json", PluginProductPTZ.class.getClassLoader())
+                        "sdk-device-ptz-metadata.json", PluginProductPTZ.class.getClassLoader())
                         .getInputStream()
         ) {
             // 从json文件中读取产品的默认物模型

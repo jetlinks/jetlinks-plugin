@@ -44,7 +44,7 @@ public class PluginProductRS485 implements PluginProduct {
     static {
         try (
                 InputStream stream = new ClassPathResource(
-                        "sdk-device-media-metadata.json", PluginProductRS485.class.getClassLoader())
+                        "sdk-device-rs485-metadata.json", PluginProductRS485.class.getClassLoader())
                         .getInputStream()
         ) {
             // 从json文件中读取产品的默认物模型
