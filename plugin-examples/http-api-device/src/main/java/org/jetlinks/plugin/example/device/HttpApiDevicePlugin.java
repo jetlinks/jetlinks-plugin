@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.hswebframework.web.api.crud.entity.PagerResult;
+import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.message.DeviceMessage;
 import org.jetlinks.core.message.DeviceOfflineMessage;
 import org.jetlinks.core.message.DeviceOnlineMessage;
@@ -13,9 +15,13 @@ import org.jetlinks.core.message.property.ReadPropertyMessage;
 import org.jetlinks.core.message.property.ReportPropertyMessage;
 import org.jetlinks.core.message.property.WritePropertyMessage;
 import org.jetlinks.core.metadata.ConfigMetadata;
+import org.jetlinks.core.metadata.SimplePropertyMetadata;
+import org.jetlinks.core.metadata.types.StringType;
 import org.jetlinks.core.things.Thing;
 import org.jetlinks.plugin.core.PluginContext;
+import org.jetlinks.plugin.internal.device.Device;
 import org.jetlinks.plugin.internal.device.DeviceGatewayPlugin;
+import org.jetlinks.plugin.internal.device.command.QueryDevicePageCommand;
 import org.reactivestreams.Publisher;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,8 +36,8 @@ import java.util.Map;
 @Slf4j
 class HttpApiDevicePlugin extends DeviceGatewayPlugin {
 
-    static final String API_URL= "api_url";
-    static final String ACCESS_KEY= "access_key";
+    static final String API_URL = "api_url";
+    static final String ACCESS_KEY = "access_key";
 
     private final WebClient client;
 
@@ -58,6 +64,21 @@ class HttpApiDevicePlugin extends DeviceGatewayPlugin {
                 // Authorization: Bearer {token}
                 .defaultHeaders(headers -> headers.setBearerAuth(accessKey))
                 .build();
+
+
+        registerHandler(QueryDevicePageCommand.class,
+                        CommandHandler
+                                .of(QueryDevicePageCommand.metadata(
+                                            SimplePropertyMetadata.of("id", "ID", StringType.GLOBAL)),
+                                    (cmd, self) -> queryDevice(cmd),
+                                    QueryDevicePageCommand::new)
+        );
+    }
+
+    private Mono<PagerResult<Device>> queryDevice(QueryDevicePageCommand cmd) {
+
+        //todo 查询设备列表
+        return Mono.just(PagerResult.empty());
     }
 
     @Override

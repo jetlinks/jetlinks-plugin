@@ -1,5 +1,6 @@
 package org.jetlinks.plugin.internal.device;
 
+import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.device.DeviceOperator;
 import org.jetlinks.core.device.DeviceProductOperator;
 import org.jetlinks.core.device.DeviceRegistry;
@@ -59,9 +60,9 @@ public abstract class DeviceGatewayPlugin extends AbstractPlugin {
      * @param message   指令
      * @return 执行结果
      */
-    public Publisher<? extends DeviceMessage>  execute(String productId,
-                                       DeviceOperator device,
-                                       DeviceMessage message) {
+    public Publisher<? extends DeviceMessage> execute(String productId,
+                                                      DeviceOperator device,
+                                                      DeviceMessage message) {
         return execute(message);
     }
 
@@ -119,7 +120,10 @@ public abstract class DeviceGatewayPlugin extends AbstractPlugin {
      *
      * @param productId 插件定义的产品ID
      * @return 设备列表
+     * @see org.jetlinks.plugin.internal.device.command.QueryDevicePageCommand
+     * @deprecated 已启用, 使用命令来支持.
      */
+    @Deprecated
     public Flux<Device> scanDevices(String productId) {
         return Flux.empty();
     }
