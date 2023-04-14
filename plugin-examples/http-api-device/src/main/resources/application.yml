@@ -1,0 +1,4 @@
+hsweb:
+  webflux:
+    response-wrapper:
+      enabled: false #开启响应包装器(将返回值包装为ResponseMessage)

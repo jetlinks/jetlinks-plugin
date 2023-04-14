@@ -1,8 +1,11 @@
 package org.jetlinks.plugin.example.device;
 
+import org.hswebframework.ezorm.core.param.Term;
+import org.hswebframework.web.api.crud.entity.QueryParamEntity;
 import org.jetlinks.core.device.DeviceInfo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +30,12 @@ public class MockHttpApiServer {
     static class DeviceController {
 
         private final Map<String, HttpApiDevicePlugin.DeviceInfo> cache = new ConcurrentHashMap<>();
+
+        public DeviceController() {
+            cache.put("device_1", new HttpApiDevicePlugin.DeviceInfo("device_1", false, null));
+            cache.put("device_2", new HttpApiDevicePlugin.DeviceInfo("device_2", false, null));
+            cache.put("device_3", new HttpApiDevicePlugin.DeviceInfo("device_3", false, null));
+        }
 
         @PostMapping("/device/{deviceId}/properties")
         private Mono<Void> updateState(@PathVariable String deviceId,
@@ -68,6 +77,21 @@ public class MockHttpApiServer {
             return devices
                     .flatMapIterable(Function.identity())
                     .map(id -> cache.getOrDefault(id, new HttpApiDevicePlugin.DeviceInfo(id, true, null)));
+        }
+
+        //获取设备
+        @PostMapping("/device/_query")
+        public Flux<HttpApiDevicePlugin.DeviceInfo> query(@RequestBody QueryParamEntity query) {
+            String deviceId = query
+                    .getTerms()
+                    .stream()
+                    .filter(term -> "id".equals(term.getColumn()))
+                    .map(Term::getValue)
+                    .map(Object::toString)
+                    .findAny()
+                    .orElse(null);
+
+            return StringUtils.hasText(deviceId) ? Flux.just(cache.get(deviceId)) : Flux.fromIterable(cache.values());
         }
     }
 }
