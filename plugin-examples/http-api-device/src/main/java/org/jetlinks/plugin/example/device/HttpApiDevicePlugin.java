@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.hswebframework.web.api.crud.entity.PagerResult;
+import org.hswebframework.web.api.crud.entity.QueryParamEntity;
 import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.message.DeviceMessage;
 import org.jetlinks.core.message.DeviceOfflineMessage;
@@ -76,9 +77,20 @@ class HttpApiDevicePlugin extends DeviceGatewayPlugin {
     }
 
     private Mono<PagerResult<Device>> queryDevice(QueryDevicePageCommand cmd) {
-
-        //todo 查询设备列表
-        return Mono.just(PagerResult.empty());
+        QueryParamEntity query = cmd.toQueryParam();
+        return client
+                .post()
+                .uri("/device/_query")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(query)
+                .exchangeToFlux(response -> response.bodyToFlux(DeviceInfo.class))
+                .map(deviceInfo -> {
+                    Device device = new Device();
+                    device.setId(deviceInfo.getId());
+                    return device;
+                })
+                .collectList()
+                .map(list -> PagerResult.of(list.size(), list, query));
     }
 
     @Override
