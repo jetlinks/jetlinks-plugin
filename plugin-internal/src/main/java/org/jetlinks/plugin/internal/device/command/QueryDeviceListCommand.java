@@ -8,20 +8,19 @@ import org.jetlinks.core.metadata.FunctionMetadata;
 import org.jetlinks.core.metadata.PropertyMetadata;
 import org.jetlinks.core.metadata.SimpleFunctionMetadata;
 import org.jetlinks.plugin.internal.device.Device;
-import org.hswebframework.web.api.crud.entity.PagerResult;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * 分页查询设备命令
+ * 查询设备列表命令
  *
  * @author zhouhao
  * @since 1.0
  */
-public class QueryDevicePageCommand extends AbstractCommand<Mono<PagerResult<Device>>, QueryDevicePageCommand> {
+public class QueryDeviceListCommand extends AbstractCommand<Flux<Device>, QueryDeviceListCommand> {
 
     public String productId() {
         return (String) readable().get("productId");
@@ -38,13 +37,11 @@ public class QueryDevicePageCommand extends AbstractCommand<Mono<PagerResult<Dev
 
     public static FunctionMetadata metadata(List<PropertyMetadata> terms) {
         SimpleFunctionMetadata metadata = new SimpleFunctionMetadata();
-        metadata.setId(CommandUtils.getCommandIdByType(QueryDevicePageCommand.class));
+        metadata.setId(CommandUtils.getCommandIdByType(QueryDeviceListCommand.class));
 
-        metadata.setName("分页查询设备列表");
+        metadata.setName("查询设备列表");
 
         metadata.setExpands(Collections.singletonMap("terms", terms));
-
-        //todo 其他属性设置?
 
         return metadata;
     }
