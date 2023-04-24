@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.hswebframework.web.api.crud.entity.PagerResult;
+import org.hswebframework.web.api.crud.entity.QueryParamEntity;
 import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.message.DeviceMessage;
 import org.jetlinks.core.message.DeviceOfflineMessage;
@@ -21,6 +22,7 @@ import org.jetlinks.core.things.Thing;
 import org.jetlinks.plugin.core.PluginContext;
 import org.jetlinks.plugin.internal.device.Device;
 import org.jetlinks.plugin.internal.device.DeviceGatewayPlugin;
+import org.jetlinks.plugin.internal.device.command.QueryDeviceListCommand;
 import org.jetlinks.plugin.internal.device.command.QueryDevicePageCommand;
 import org.reactivestreams.Publisher;
 import org.springframework.http.MediaType;
@@ -73,12 +75,46 @@ class HttpApiDevicePlugin extends DeviceGatewayPlugin {
                                     (cmd, self) -> queryDevice(cmd),
                                     QueryDevicePageCommand::new)
         );
+
+        registerHandler(QueryDeviceListCommand.class,
+                CommandHandler
+                        .of(QueryDeviceListCommand.metadata(
+                                SimplePropertyMetadata.of("id", "ID", StringType.GLOBAL)),
+                                (cmd, self) -> queryDevice(cmd),
+                                QueryDeviceListCommand::new)
+        );
     }
 
     private Mono<PagerResult<Device>> queryDevice(QueryDevicePageCommand cmd) {
+        QueryParamEntity query = cmd.toQueryParam();
+        return client
+                .post()
+                .uri("/device/_query")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(query)
+                .exchangeToFlux(response -> response.bodyToFlux(DeviceInfo.class))
+                .map(deviceInfo -> {
+                    Device device = new Device();
+                    device.setId(deviceInfo.getId());
+                    return device;
+                })
+                .collectList()
+                .map(list -> PagerResult.of(list.size(), list, query));
+    }
 
-        //todo 查询设备列表
-        return Mono.just(PagerResult.empty());
+    private Flux<Device> queryDevice(QueryDeviceListCommand cmd) {
+        QueryParamEntity query = cmd.toQueryParam();
+        return client
+                .post()
+                .uri("/device/_query")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(query)
+                .exchangeToFlux(response -> response.bodyToFlux(DeviceInfo.class))
+                .map(deviceInfo -> {
+                    Device device = new Device();
+                    device.setId(deviceInfo.getId());
+                    return device;
+                });
     }
 
     @Override
