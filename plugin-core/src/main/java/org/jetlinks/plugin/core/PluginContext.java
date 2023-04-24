@@ -1,5 +1,7 @@
 package org.jetlinks.plugin.core;
 
+import org.jetlinks.core.monitor.Monitor;
+
 import java.io.File;
 
 /**
@@ -35,8 +37,19 @@ public interface PluginContext {
      * 插件监控信息
      *
      * @return 监控信息
+     * @deprecated 请使用 {@link PluginContext#monitor}方法
      */
+    @Deprecated
     PluginMetrics metrics();
+
+    /**
+     * 插件监控信息
+     *
+     * @return 监控信息
+     */
+    default Monitor monitor() {
+        return metrics();
+    }
 
     /**
      * 调度器,用于执行定时任务等操作

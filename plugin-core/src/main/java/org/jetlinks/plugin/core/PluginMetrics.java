@@ -1,11 +1,8 @@
 package org.jetlinks.plugin.core;
 
-public interface PluginMetrics {
+import org.jetlinks.core.monitor.Monitor;
 
-    void count(String operation, int inc);
+public interface PluginMetrics extends Monitor {
 
-    void value(String operation, double value);
-
-    void error(String operation, Throwable error);
 
 }
