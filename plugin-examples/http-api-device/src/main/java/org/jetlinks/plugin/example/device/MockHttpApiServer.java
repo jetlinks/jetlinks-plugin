@@ -32,9 +32,9 @@ public class MockHttpApiServer {
         private final Map<String, HttpApiDevicePlugin.DeviceInfo> cache = new ConcurrentHashMap<>();
 
         public DeviceController() {
-            cache.put("device_1", new HttpApiDevicePlugin.DeviceInfo("device_1", false, null));
-            cache.put("device_2", new HttpApiDevicePlugin.DeviceInfo("device_2", false, null));
-            cache.put("device_3", new HttpApiDevicePlugin.DeviceInfo("device_3", false, null));
+            cache.put("device_1", new HttpApiDevicePlugin.DeviceInfo("device_1", true, null));
+            cache.put("device_2", new HttpApiDevicePlugin.DeviceInfo("device_2", true, null));
+            cache.put("device_3", new HttpApiDevicePlugin.DeviceInfo("device_3", true, null));
         }
 
         @PostMapping("/device/{deviceId}/properties")

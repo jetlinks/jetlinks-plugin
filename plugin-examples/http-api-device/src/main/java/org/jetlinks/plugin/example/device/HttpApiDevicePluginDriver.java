@@ -1,5 +1,6 @@
 package org.jetlinks.plugin.example.device;
 
+import org.jetlinks.core.config.ConfigKey;
 import org.jetlinks.core.metadata.DefaultConfigMetadata;
 import org.jetlinks.core.metadata.types.StringType;
 import org.jetlinks.plugin.core.Description;
@@ -16,6 +17,7 @@ import java.util.Collections;
 public class HttpApiDevicePluginDriver implements DeviceGatewayPluginDriver {
 
     static Version version_1_0 = new Version(1, 0, 0, true);
+    public static final ConfigKey<Boolean> required = ConfigKey.of("required", "是否必填", Boolean.TYPE);
 
     @Nonnull
     @Override
@@ -30,8 +32,8 @@ public class HttpApiDevicePluginDriver implements DeviceGatewayPluginDriver {
                 Collections.singletonMap(
                         PLUGIN_CONFIG_METADATA,
                         new DefaultConfigMetadata()
-                                .add(HttpApiDevicePlugin.API_URL, "API地址", StringType.GLOBAL)
-                                .add(HttpApiDevicePlugin.ACCESS_KEY, "认证密钥", StringType.GLOBAL)
+                                .add(HttpApiDevicePlugin.API_URL, "API地址", new StringType().expand(required.value(true)))
+                                .add(HttpApiDevicePlugin.ACCESS_KEY, "认证密钥", new StringType().expand(required.value(true)))
                 )
         );
     }
