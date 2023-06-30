@@ -7,6 +7,7 @@ import org.jetlinks.core.device.DeviceOperator;
 import org.jetlinks.core.metadata.ConfigMetadata;
 import org.jetlinks.core.metadata.DefaultConfigMetadata;
 import org.jetlinks.core.metadata.DeviceConfigScope;
+import org.jetlinks.core.metadata.types.PasswordType;
 import org.jetlinks.core.metadata.types.StringType;
 import org.jetlinks.plugin.example.sdk.hc.HCNetSDK;
 import org.jetlinks.plugin.example.sdk.hc.NetSDKDemo;
@@ -31,13 +32,13 @@ import java.util.Map;
 public class PluginProductRS485 implements PluginProduct {
     private static String METADATA;
 
-    private static final String USERNAME    = "user";
-    private static final String PASSWORD    = "psw";
     private static final String DW_CHANNEL  = "dwChannel";
     private static final String FUNCTION_ID = "monthly_record";
 
     private static final ConfigMetadata deviceConfigMetadata = new DefaultConfigMetadata("设备配置", "设备接入配置")
-            .add(DW_CHANNEL, "通道号", new StringType(), DeviceConfigScope.device);
+            .add(DW_CHANNEL, "通道号", new StringType(), DeviceConfigScope.device)
+                    .add(USERNAME, "用户名", new StringType().expand(required.value(true)), DeviceConfigScope.device)
+                    .add(PASSWORD, "密码", new PasswordType().expand(required.value(true)), DeviceConfigScope.device);
     private static final ConfigMetadata productConfigMetadata = new DefaultConfigMetadata("产品配置", "设备接入配置")
             .add(DW_CHANNEL, "通道号", new StringType(), DeviceConfigScope.product);
 

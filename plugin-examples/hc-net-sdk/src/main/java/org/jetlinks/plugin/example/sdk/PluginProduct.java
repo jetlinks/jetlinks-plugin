@@ -1,5 +1,6 @@
 package org.jetlinks.plugin.example.sdk;
 
+import org.jetlinks.core.config.ConfigKey;
 import org.jetlinks.core.device.DeviceOperator;
 import org.jetlinks.core.metadata.ConfigMetadata;
 import org.jetlinks.plugin.example.sdk.hc.NetSDKDemo;
@@ -14,6 +15,10 @@ import java.util.Map;
  * @author zhangji 2023/3/9
  */
 public interface PluginProduct {
+
+    String USERNAME    = "user";
+    String PASSWORD    = "psw";
+    ConfigKey<Boolean> required = ConfigKey.of("required", "是否必填", Boolean.TYPE);
 
     String getId();
 
