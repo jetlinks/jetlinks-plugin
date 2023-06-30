@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.jetlinks.plugin.example.sdk.PluginProduct.*;
+
 /**
  * 输入描述.
  *
@@ -46,11 +48,8 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
 
     static final String IP       = "ip";
     static final String PORT     = "port";
-    static final String USERNAME = "user";
-    static final String PASSWORD = "psw";
     static final String USER_ID  = "user_id";
 
-    public static final ConfigKey<Boolean> required = ConfigKey.of("required", "是否必填", Boolean.TYPE);
     private static final NetSDKDemo sdk = new NetSDKDemo();
     public static final Map<String, PluginProduct> pluginProducts = new HashMap<>();
 
@@ -73,9 +72,6 @@ public class SdkDevicePlugin extends DeviceGatewayPlugin {
         return Mono
                 .justOrEmpty(pluginProducts.get(productId))
                 .mapNotNull(PluginProduct::getDeviceConfigMetadata)
-                .map(configMetadata -> ((DefaultConfigMetadata) configMetadata)
-                        .add(USERNAME, "用户名", new StringType().expand(required.value(true)), DeviceConfigScope.device)
-                        .add(PASSWORD, "密码", new PasswordType().expand(required.value(true)), DeviceConfigScope.device))
                 .defaultIfEmpty(new DefaultConfigMetadata()
                         .add(USERNAME, "用户名", new StringType().expand(required.value(true)), DeviceConfigScope.device)
                         .add(PASSWORD, "密码", new PasswordType().expand(required.value(true)), DeviceConfigScope.device))

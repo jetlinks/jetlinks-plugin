@@ -26,8 +26,6 @@ import java.util.Map;
 public class PluginProductPTZ implements PluginProduct {
     private static String METADATA;
 
-    private static final String USERNAME    = "user";
-    private static final String PASSWORD    = "psw";
     private static final String FUNCTION_ID = "regular_inspection";
 
     static {
