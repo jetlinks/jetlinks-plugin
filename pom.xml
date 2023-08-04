@@ -7,7 +7,7 @@
     <groupId>org.jetlinks.plugin</groupId>
     <artifactId>jetlinks-plugin</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1</version>
     <modules>
         <module>plugin-core</module>
         <module>plugin-internal</module>
@@ -54,9 +54,9 @@
         <project.build.jdk>${java.version}</project.build.jdk>
         <reactor.version>2020.0.14</reactor.version>
         <slf4j.version>1.7.36</slf4j.version>
-        <jetlinks.core.version>1.2.1-SNAPSHOT</jetlinks.core.version>
-        <hsweb.framework.version>4.0.16-SNAPSHOT</hsweb.framework.version>
-        <reactor.ql.version>1.0.16-SNAPSHOT</reactor.ql.version>
+        <jetlinks.core.version>1.2.1</jetlinks.core.version>
+        <hsweb.framework.version>4.0.16</hsweb.framework.version>
+        <reactor.ql.version>1.0.16</reactor.ql.version>
     </properties>
 
     <dependencies>
