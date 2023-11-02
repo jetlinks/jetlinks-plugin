@@ -62,7 +62,9 @@ public interface PluginScheduler {
      * 取消指定名称的定时任务
      * @param name 任务名称
      */
-    void cancel(String name);
+   default void cancel(String name){
+
+   }
 
     /**
      * 固定周期执行任务,可通过返回值{@link Disposable#dispose()}来取消任务
