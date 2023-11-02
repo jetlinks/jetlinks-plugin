@@ -6,6 +6,7 @@ import lombok.Getter;
 public class Version implements Comparable<Version> {
     public static Version platform_2_0 = new Version(2, 0, 0, false);
     public static Version platform_2_1 = new Version(2, 1, 0, false);
+    public static Version platform_2_2 = new Version(2, 2, 0, false);
 
     public static Version platform_latest = new Version(255, 255, 255, false);
 
