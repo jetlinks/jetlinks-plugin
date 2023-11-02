@@ -59,6 +59,12 @@ public interface PluginScheduler {
     Disposable interval(String name, Mono<Void> job, String cronExpression, boolean singleton);
 
     /**
+     * 取消指定名称的定时任务
+     * @param name 任务名称
+     */
+    void cancel(String name);
+
+    /**
      * 固定周期执行任务,可通过返回值{@link Disposable#dispose()}来取消任务
      *
      * @param job       异步任务
