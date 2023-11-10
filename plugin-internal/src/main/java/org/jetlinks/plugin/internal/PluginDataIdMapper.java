@@ -1,6 +1,7 @@
 package org.jetlinks.plugin.internal;
 
 import org.jetlinks.core.device.DeviceThingType;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface PluginDataIdMapper {
