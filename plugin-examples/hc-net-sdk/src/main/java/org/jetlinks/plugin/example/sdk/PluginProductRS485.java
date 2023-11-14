@@ -36,9 +36,7 @@ public class PluginProductRS485 implements PluginProduct {
     private static final String FUNCTION_ID = "monthly_record";
 
     private static final ConfigMetadata deviceConfigMetadata = new DefaultConfigMetadata("设备配置", "设备接入配置")
-            .add(DW_CHANNEL, "通道号", new StringType(), DeviceConfigScope.device)
-                    .add(USERNAME, "用户名", new StringType().expand(required.value(true)), DeviceConfigScope.device)
-                    .add(PASSWORD, "密码", new PasswordType().expand(required.value(true)), DeviceConfigScope.device);
+            .add(DW_CHANNEL, "通道号", new StringType(), DeviceConfigScope.device);
     private static final ConfigMetadata productConfigMetadata = new DefaultConfigMetadata("产品配置", "设备接入配置")
             .add(DW_CHANNEL, "通道号", new StringType(), DeviceConfigScope.product);
 

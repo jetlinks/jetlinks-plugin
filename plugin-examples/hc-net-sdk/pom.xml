@@ -12,6 +12,30 @@
 
     <artifactId>hc-net-sdk</artifactId>
 
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <nonFilteredFileExtensions>
+                        <nonFilteredFileExtension>bin</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>so</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>dll</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>1</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>lib</nonFilteredFileExtension>
+                    </nonFilteredFileExtensions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>org.jetlinks.plugin</groupId>
@@ -19,16 +43,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jetlinks</groupId>
-            <artifactId>jetlinks-supports</artifactId>
-            <version>1.2.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>com.sun.jna</groupId>
             <artifactId>jna</artifactId>
             <version>3.0.9</version>
         </dependency>
     </dependencies>
-
 
 </project>

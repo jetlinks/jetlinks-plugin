@@ -1,14 +1,17 @@
 package org.jetlinks.plugin.example.sdk.hc;
 
 import com.sun.jna.*;
-import com.sun.jna.examples.win32.W32API;
-import com.sun.jna.examples.win32.W32API.HWND;
+import org.jetlinks.plugin.example.sdk.hc.examples.GDI32;
+import org.jetlinks.plugin.example.sdk.hc.examples.W32API;
+import org.jetlinks.plugin.example.sdk.hc.examples.W32API.HWND;
 import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.ShortByReference;
 
-import java.util.Arrays;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 //SDK接口说明,HCNetSDK.dll
 public interface HCNetSDK extends Library {
@@ -710,6 +713,8 @@ public interface HCNetSDK extends Library {
     public static final int NET_DVR_GET_WORK_STATUS = 6189;   //获取设备工作状态
     public static final int NET_DVR_GET_MONTHLY_RECORD_DISTRIBUTION = 6164; //获取月历录像分布
 
+    public static final int NET_DVR_GET_ACCESS_DEVICE_CHANNEL_INFO = 6165; //获取待接入设备通道信息
+
     public static final int NET_DVR_GET_CURTRIGGERMODE = 3130;   //获取设备当前触发模式
     public static final int NET_ITC_GET_TRIGGERCFG = 3003;  //获取触发参数
     public static final int NET_ITC_SET_TRIGGERCFG = 3004;  //设置触发参数
@@ -1151,6 +1156,26 @@ public interface HCNetSDK extends Library {
         //存储文件名使用
         public String toStringTitle() {
             return String.format("Time%02d%02d%02d%02d%02d%02d", dwYear, dwMonth, dwDay, dwHour, dwMinute, dwSecond);
+        }
+
+        public static NET_DVR_TIME of(LocalDateTime date) {
+            NET_DVR_TIME dvrTime = new NET_DVR_TIME();
+            dvrTime.dwYear = date.getYear();
+            dvrTime.dwMonth = date.getMonthValue();
+            dvrTime.dwDay = date.getDayOfMonth();
+            dvrTime.dwHour = date.getHour();
+            dvrTime.dwMinute = date.getMinute();
+            dvrTime.dwSecond = date.getSecond();
+            return dvrTime;
+        }
+
+        public Long toTimestamp() {
+            return ZonedDateTime
+                    .of(
+                            LocalDateTime.of(dwYear, dwMonth, dwDay, dwHour, dwMinute, dwSecond),
+                            ZoneOffset.systemDefault()
+                    )
+                    .toEpochSecond() * 1000;
         }
     }
 
@@ -10530,6 +10555,48 @@ DVR实现巡航数据结构
         public byte bySupport256PresetNo;
         public byte[] byRes = new byte[6];
     }
+
+    // 待接入设备参数结构体
+    class NET_DVR_ACCESS_DEVICE_INFO extends HIKSDKStructure {
+        public int dwSize; //结构体大小
+        public byte byGroup; //组号，每组可获取64个通道，从0开始，0表示第1组，以此类推
+        public byte byProType; //协议类型：0- 私有协议，1- 松下协议，2- 索尼
+        public byte byAccessMode; //接入模式：0- IP地址，1- 域名
+        public byte byRes1; //保留，置为0
+        public byte[] sUserName = new byte[32]; //用户名
+        public byte[] szPassword  = new byte[16]; //密码
+        public byte[] szDomain   = new byte[16]; //设备域名
+        public NET_DVR_IPADDR struIP; //设备域名
+        public short wPort; //端口号
+        public byte[] byRes2 = new byte[34]; //保留，置为0
+    }
+
+    // 待接入设备通道信息结构体
+    class NET_DVR_ACCESS_DEVICE_CHANNEL_INFO extends HIKSDKStructure {
+        public int dwSize; //结构体大小
+        public int dwTotalChannelNum; //设备总通道个数，设备不在线时返回0，byChannel无效
+        public byte[] byChannel = new byte[64]; //通道信息，byChannel[i]为0表示第（byGroup+1）*（i-1）通道未接入到NVR，为1表示该通道已接入到NVR
+        public byte[] byRes = new byte[32];
+    }
+
+    boolean NET_DVR_GetLinkAddr(int lLinkHandle, int enumLinkKind, LPNET_DVR_LINK_ADDR lpLinkAddr);
+
+    class LPNET_DVR_LINK_ADDR extends HIKSDKStructure {
+        public NET_DVR_IPADDR_UNION uLocalIP; //本地IP地址
+        public short wLocalPort; //本地端口号
+        public byte byLocalPortNum; //本地端口数目
+        public byte[] byRes1 = new byte[3]; //保留，置为0
+        public NET_DVR_IPADDR_UNION uDevIP; //设备IP地址
+        public short wDevPort; //设备端口号
+        public byte byDevPortNum; //设备端口数目
+        public byte[] byRes2 = new byte[3]; //保留，置为0
+        public byte[] byRes = new byte[80]; //保留，置为0
+    }
+
+    class NET_DVR_IPADDR_UNION extends HIKSDKStructure {
+        public byte[] szIPv4 = new byte[16];
+        public byte[] szIPv6 = new byte[256];
+    }
 }
 
 //播放库函数声明,PlayCtrl.dll
@@ -10577,15 +10644,15 @@ interface PlayCtrl extends Library {
 }
 
 //windows gdi接口,gdi32.dll in system32 folder, 在设置遮挡区域,移动侦测区域等情况下使用
-interface GDI32 extends W32API {
-    GDI32 INSTANCE = (GDI32) Native.loadLibrary("gdi32", GDI32.class, DEFAULT_OPTIONS);
-
-    public static final int TRANSPARENT = 1;
-
-    int SetBkMode(HDC hdc, int i);
-
-    HANDLE CreateSolidBrush(int icolor);
-}
+//interface GDI32 extends W32API {
+//    GDI32 INSTANCE = (GDI32) Native.loadLibrary("gdi32", GDI32.class, DEFAULT_OPTIONS);
+//
+//    public static final int TRANSPARENT = 1;
+//
+//    int SetBkMode(HDC hdc, int i);
+//
+//    HANDLE CreateSolidBrush(int icolor);
+//}
 
 //windows user32接口,user32.dll in system32 folder, 在设置遮挡区域,移动侦测区域等情况下使用
 interface USER32 extends W32API {
@@ -10599,8 +10666,8 @@ interface USER32 extends W32API {
     public static final int BDR_SUNKENOUTER = 0x0002;
     public static final int BF_RECT = (BF_LEFT | BF_TOP | BF_RIGHT | BF_BOTTOM);
 
-    boolean DrawEdge(HDC hdc, com.sun.jna.examples.win32.GDI32.RECT qrc, int edge, int grfFlags);
+    boolean DrawEdge(HDC hdc, GDI32.RECT qrc, int edge, int grfFlags);
 
-    int FillRect(HDC hDC, com.sun.jna.examples.win32.GDI32.RECT lprc, HANDLE hbr);
+    int FillRect(HDC hDC, GDI32.RECT lprc, HANDLE hbr);
 }
 

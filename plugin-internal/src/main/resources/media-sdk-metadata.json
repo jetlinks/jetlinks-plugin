@@ -1,0 +1,1304 @@
+{
+  "events": [
+    {
+      "valueType": {
+        "type": "object",
+        "properties": [
+          {
+            "valueType": {
+              "elements": [
+                {
+                  "text": "全部",
+                  "value": "0"
+                },
+                {
+                  "text": "一级",
+                  "value": "1"
+                },
+                {
+                  "text": "二级",
+                  "value": "2"
+                },
+                {
+                  "text": "三级",
+                  "value": "3"
+                },
+                {
+                  "text": "四级",
+                  "value": "4"
+                }
+              ],
+              "type": "enum"
+            },
+            "name": "告警级别",
+            "id": "AlarmPriority"
+          },
+          {
+            "valueType": {
+              "elements": [
+                {
+                  "text": "全部",
+                  "value": "0"
+                },
+                {
+                  "text": "电话报警",
+                  "value": "1"
+                },
+                {
+                  "text": "设备报警",
+                  "value": "2"
+                },
+                {
+                  "text": "短信报警",
+                  "value": "3"
+                },
+                {
+                  "text": "GPS报警",
+                  "value": "4"
+                },
+                {
+                  "text": "视频报警",
+                  "value": "5"
+                },
+                {
+                  "text": "设备故障报警",
+                  "value": "6"
+                },
+                {
+                  "text": "其他报警",
+                  "value": "7"
+                }
+              ],
+              "type": "enum"
+            },
+            "name": "报警方式",
+            "id": "AlarmMethod"
+          },
+          {
+            "valueType": {
+              "tz": "Asia/Shanghai",
+              "format": "yyyy-MM-dd'T'HH:mm:ss",
+              "type": "date"
+            },
+            "name": "报警时间",
+            "id": "AlarmTime"
+          },
+          {
+            "valueType": {
+              "lonProperty": "lon",
+              "type": "geoPoint",
+              "latProperty": "lat"
+            },
+            "name": "经纬度",
+            "id": "lonlat"
+          },
+          {
+            "valueType": {
+              "expands": {
+                "maxLength": ""
+              },
+              "type": "string"
+            },
+            "name": "报警类型",
+            "id": "AlarmType"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "报警类型拓展参数",
+            "id": "AlarmTypeParam"
+          },
+          {
+            "valueType": {
+              "expands": {
+                "maxLength": "100"
+              },
+              "type": "string"
+            },
+            "name": "报警类型说明",
+            "id": "AlarmTypeText"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "报警设备ID",
+            "id": "Channel"
+          }
+        ]
+      },
+      "name": "报警",
+      "id": "Alarm",
+      "expands": {
+        "level": "ordinary"
+      }
+    }
+  ],
+  "properties": [],
+  "functions": [
+    {
+      "async": false,
+      "inputs": [
+        {
+          "valueType": {
+            "elements": [
+              {
+                "text": "全部",
+                "value": "0"
+              },
+              {
+                "text": "一级警情",
+                "value": "1"
+              },
+              {
+                "text": "二级警情",
+                "value": "2"
+              },
+              {
+                "text": "三级警情",
+                "value": "3"
+              },
+              {
+                "text": "四级警情",
+                "value": "4"
+              }
+            ],
+            "type": "enum"
+          },
+          "name": "报警起始级别",
+          "id": "StartAlarmPriority",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "elements": [
+              {
+                "text": "全部",
+                "value": "0"
+              },
+              {
+                "text": "一级警情",
+                "value": "1"
+              },
+              {
+                "text": "二级警情",
+                "value": "2"
+              },
+              {
+                "text": "三级警情",
+                "value": "3"
+              },
+              {
+                "text": "四级警情",
+                "value": "4"
+              }
+            ],
+            "type": "enum"
+          },
+          "name": "报警中止级别",
+          "id": "EndAlarmPriority",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "报警方式",
+          "description": "报警方式条件(可选),取值\n0为全部,\n1为电话报警,\n2为设备报警,\n3为短信报警,\n 4为GPS报警,\n 5为视频报警,\n6为设备故障报警,\n7其他报警;\n可以为直接组合如12为电话报警或设备报警",
+          "id": "AlarmMethod",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "tz": "Asia/Shanghai",
+            "format": "yyyy-MM-dd'T'HH:mm:ss",
+            "type": "date"
+          },
+          "name": "报警起始时间",
+          "id": "StartAlarmTime",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "tz": "Asia/Shanghai",
+            "format": "yyyy-MM-dd'T'HH:mm:ss",
+            "type": "date"
+          },
+          "name": "报警截止时间",
+          "id": "EndAlarmTime",
+          "expands": {
+            "required": false
+          }
+        }
+      ],
+      "name": "订阅报警",
+      "id": "SubscribeAlarm"
+    },
+    {
+      "output": {
+        "type": "object",
+        "properties": [
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "流ID",
+            "id": "streamId"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "FLV播放地址",
+            "id": "flv"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "mp4播放地址",
+            "id": "mp4"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "hls播放地址",
+            "id": "hls"
+          }
+        ]
+      },
+      "async": true,
+      "inputs": [
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "通道ID",
+          "id": "channel",
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "valueType": {
+            "format": "yyyy-MM-dd'T'HH:mm:ss",
+            "type": "date"
+          },
+          "name": "开始时间",
+          "id": "startTime",
+          "description": "不为空则表示播放录像",
+          "expands": {
+            "readOnly": false,
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "format": "yyyy-MM-dd'T'HH:mm:ss",
+            "type": "date"
+          },
+          "name": "结束时间",
+          "description": "不为空则表示播放录像",
+          "id": "endTime",
+          "expands": {
+            "readOnly": false,
+            "required": false
+          }
+        }
+      ],
+      "name": "开始推流",
+      "id": "StartPushStreaming"
+    },
+    {
+      "id": "StartRecord",
+      "name": "开始录像",
+      "async": true,
+      "output": {
+        "type": "object",
+        "properties": [
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "录像ID",
+            "description": "",
+            "id": "id"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "设备ID",
+            "description": "",
+            "id": "deviceId"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "通道ID",
+            "description": "",
+            "id": "channelId"
+          },
+          {
+            "valueType": {
+              "type": "long"
+            },
+            "name": "录像开始时间",
+            "description": "",
+            "id": "startTime"
+          },
+          {
+            "valueType": {
+              "type": "long"
+            },
+            "name": "录像结束时间",
+            "description": "",
+            "id": "endTime"
+          },
+          {
+            "valueType": {
+              "type": "long"
+            },
+            "name": "视频流开始时间",
+            "description": "",
+            "id": "streamStartTime"
+          },
+          {
+            "valueType": {
+              "type": "long"
+            },
+            "name": "视频流结束时间",
+            "description": "",
+            "id": "streamEndTime"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "视频流类型",
+            "description": "",
+            "id": "streamType"
+          },
+          {
+            "valueType": {
+              "type": "string"
+            },
+            "name": "视频流ID",
+            "description": "",
+            "id": "streamId"
+          },
+          {
+            "valueType": {
+              "type": "array",
+              "elementType": {
+                "type": "object",
+                "properties": [
+                  {
+                    "valueType": {
+                      "type": "string"
+                    },
+                    "name": "视频流ID",
+                    "description": "",
+                    "id": "streamId"
+                  },
+                  {
+                    "valueType": {
+                      "type": "string"
+                    },
+                    "name": "文件路径",
+                    "description": "",
+                    "id": "path"
+                  },
+                  {
+                    "valueType": {
+                      "type": "long"
+                    },
+                    "name": "录像文件时间点",
+                    "description": "",
+                    "id": "time"
+                  },
+                  {
+                    "valueType": {
+                      "type": "string"
+                    },
+                    "name": "rtsp播放地址",
+                    "description": "",
+                    "id": "rtsp"
+                  },
+                  {
+                    "valueType": {
+                      "type": "string"
+                    },
+                    "name": "rtmp播放地址",
+                    "description": "",
+                    "id": "rtmp"
+                  },
+                  {
+                    "valueType": {
+                      "type": "string"
+                    },
+                    "name": "flv播放地址",
+                    "description": "",
+                    "id": "flv"
+                  },
+                  {
+                    "valueType": {
+                      "type": "string"
+                    },
+                    "name": "mp4播放地址",
+                    "description": "",
+                    "id": "mp4"
+                  },
+                  {
+                    "valueType": {
+                      "type": "string"
+                    },
+                    "name": "hls播放地址",
+                    "description": "",
+                    "id": "hls"
+                  },
+                  {
+                    "valueType": {
+                      "type": "string"
+                    },
+                    "name": "rtc播放地址",
+                    "description": "",
+                    "id": "rtc"
+                  }
+                ]
+              }
+            },
+            "name": "录像文件信息",
+            "description": "",
+            "id": "files"
+          }
+        ],
+        "expands": {}
+      },
+      "inputs": [
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "通道ID",
+          "id": "channel",
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "valueType": {
+            "format": "yyyy-MM-dd'T'HH:mm:ss",
+            "type": "date"
+          },
+          "name": "开始时间",
+          "id": "startTime",
+          "description": "不为空则表示对历史文件进行录像",
+          "expands": {
+            "readOnly": false,
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "format": "yyyy-MM-dd'T'HH:mm:ss",
+            "type": "date"
+          },
+          "name": "结束时间",
+          "description": "不为空则表示对历史文件进行录像",
+          "id": "endTime",
+          "expands": {
+            "readOnly": false,
+            "required": false
+          }
+        },
+        {
+          "id": "name",
+          "name": "录像名称",
+          "valueType": {
+            "type": "string"
+          },
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "downloadSpeed",
+          "name": "历史录像速率",
+          "valueType": {
+            "type": "int"
+          },
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "local",
+          "name": "是否本地录像",
+          "valueType": {
+            "type": "boolean",
+            "trueText": "是",
+            "trueValue": "true",
+            "falseText": "否",
+            "falseValue": "false"
+          },
+          "expands": {
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "StopRecord",
+      "name": "停止录像",
+      "async": false,
+      "output": {
+        "type": "string",
+        "expands": {}
+      },
+      "inputs": [
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "通道ID",
+          "id": "channel",
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "流ID",
+          "id": "streamId",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "local",
+          "name": "是否本地录像",
+          "valueType": {
+            "type": "boolean",
+            "trueText": "是",
+            "trueValue": "true",
+            "falseText": "否",
+            "falseValue": "false"
+          },
+          "expands": {
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "云台控制",
+      "id": "PTZ",
+      "async": false,
+      "output": {},
+      "inputs": [
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "通道ID",
+          "id": "channel",
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "valueType": {
+            "type": "int"
+          },
+          "name": "速度",
+          "id": "speed",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "elements": [
+              {
+                "text": "向上",
+                "value": "UP"
+              },
+              {
+                "text": "向下",
+                "value": "DOWN"
+              },
+              {
+                "text": "向左",
+                "value": "LEFT"
+              },
+              {
+                "text": "向右",
+                "value": "RIGHT"
+              },
+              {
+                "text": "放大",
+                "value": "ZOOM_IN"
+              },
+              {
+                "text": "缩小",
+                "value": "ZOOM_OUT"
+              },
+              {
+                "text": "停止",
+                "value": "STOP"
+              }
+            ],
+            "type": "enum"
+          },
+          "name": "操作",
+          "id": "direct",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "directs",
+          "name": "批量操作",
+          "valueType": {
+            "type": "object",
+            "parameters": [
+              {
+                "id": "UP",
+                "name": "向上",
+                "valueType": {
+                  "type": "int"
+                }
+              },
+              {
+                "id": "DOWN",
+                "name": "向下",
+                "valueType": {
+                  "type": "int"
+                }
+              },
+              {
+                "id": "LEFT",
+                "name": "向左",
+                "valueType": {
+                  "type": "int"
+                }
+              },
+              {
+                "id": "RIGHT",
+                "name": "向右",
+                "valueType": {
+                  "type": "int"
+                }
+              },
+              {
+                "id": "ZOOM_IN",
+                "name": "放大",
+                "valueType": {
+                  "type": "int"
+                }
+              },
+              {
+                "id": "ZOOM_OUT",
+                "name": "缩小",
+                "valueType": {
+                  "type": "int"
+                }
+              }
+            ]
+          },
+          "expands": {
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "async": true,
+      "inputs": [
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "流ID",
+          "id": "streamId",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "通道ID",
+          "id": "channel",
+          "expands": {
+            "required": false
+          }
+        }
+      ],
+      "name": "停止直播",
+      "id": "StopPushStreaming"
+    },
+    {
+      "output": {
+        "type": "object",
+        "properties": [
+          {
+            "valueType": {
+              "expands": {
+                "maxLength": "1024"
+              },
+              "type": "string"
+            },
+            "name": "响应sdp结果",
+            "id": "sdp"
+          }
+        ]
+      },
+      "async": false,
+      "inputs": [
+        {
+          "valueType": {
+            "type": "string"
+          },
+          "name": "通道",
+          "id": "channel",
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "valueType": {
+            "expands": {
+              "maxLength": "1024"
+            },
+            "type": "string"
+          },
+          "name": "推流地址",
+          "description": "推流地址,ip:port",
+          "id": "address",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "expands": {
+              "maxLength": "32"
+            },
+            "type": "string"
+          },
+          "name": "SSRC",
+          "id": "ssrc",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "expands": {
+              "maxLength": "5120"
+            },
+            "type": "string"
+          },
+          "name": "流描述信息",
+          "id": "mediaDescription",
+          "expands": {
+            "required": false
+          }
+        }
+      ],
+      "name": "开始级联推流",
+      "description": "此功能由系统内部发起调用",
+      "id": "StartCascadePushStreaming"
+    },
+    {
+      "id": "QueryRecordList",
+      "name": "查询录像列表",
+      "async": false,
+      "output": {
+        "type": "array",
+        "elementType": {
+          "type": "object",
+          "properties": [
+            {
+              "valueType": {
+                "expands": {
+                  "length": "255"
+                },
+                "type": "string"
+              },
+              "name": "名称",
+              "id": "name",
+              "expands": {
+                "readOnly": false
+              }
+            },
+            {
+              "valueType": {
+                "format": "yyyy-MM-dd'T'HH:mm:ss",
+                "type": "date"
+              },
+              "name": "开始时间",
+              "id": "startTime",
+              "expands": {
+                "readOnly": false
+              }
+            },
+            {
+              "valueType": {
+                "format": "yyyy-MM-dd'T'HH:mm:ss",
+                "type": "date"
+              },
+              "name": "结束时间",
+              "id": "endTime",
+              "expands": {
+                "readOnly": false
+              }
+            },
+            {
+              "valueType": {
+                "elements": [
+                  {
+                    "text": "计划录像",
+                    "value": "time"
+                  },
+                  {
+                    "text": "报警录像",
+                    "value": "alarm"
+                  },
+                  {
+                    "text": "主动录像",
+                    "value": "manual"
+                  }
+                ],
+                "type": "enum"
+              },
+              "name": "录像类型",
+              "id": "type",
+              "expands": {
+                "readOnly": false
+              }
+            }
+          ]
+        }
+      },
+      "inputs": [
+        {
+          "valueType": {
+            "format": "yyyy-MM-dd'T'HH:mm:ss",
+            "type": "date"
+          },
+          "name": "开始时间",
+          "id": "startTime",
+          "expands": {
+            "readOnly": false,
+            "required": true
+          }
+        },
+        {
+          "valueType": {
+            "format": "yyyy-MM-dd'T'HH:mm:ss",
+            "type": "date"
+          },
+          "name": "结束时间",
+          "id": "endTime",
+          "expands": {
+            "readOnly": false,
+            "required": false
+          }
+        },
+        {
+          "valueType": {
+            "elements": [
+              {
+                "text": "计划录像",
+                "value": "time"
+              },
+              {
+                "text": "所有类型",
+                "value": "all"
+              },
+              {
+                "text": "报警录像",
+                "value": "alarm"
+              },
+              {
+                "text": "主动录像",
+                "value": "manual"
+              }
+            ],
+            "type": "enum"
+          },
+          "name": "录像类型",
+          "id": "type",
+          "expands": {
+            "readOnly": false,
+            "required": false
+          }
+        },
+        {
+          "id": "channel",
+          "name": " 通道ID",
+          "valueType": {
+            "type": "string"
+          },
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "id": "local",
+          "name": "是否本地录像",
+          "valueType": {
+            "type": "boolean",
+            "trueText": "是",
+            "trueValue": "true",
+            "falseText": "否",
+            "falseValue": "false"
+          },
+          "expands": {
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "StopCascadePushStreaming",
+      "name": "停止级联推流",
+      "async": true,
+      "output": {},
+      "inputs": [
+        {
+          "id": "cascadeId",
+          "name": "级联ID",
+          "valueType": {
+            "type": "string"
+          },
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "id": "callId",
+          "name": "指令ID",
+          "valueType": {
+            "type": "string"
+          },
+          "expands": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "StreamOperation",
+      "name": "流媒体操作",
+      "async": false,
+      "output": {
+        "type": "string",
+        "expands": {}
+      },
+      "inputs": [
+        {
+          "id": "channel",
+          "name": "通道ID",
+          "valueType": {
+            "type": "string"
+          },
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "streamId",
+          "name": "流ID",
+          "valueType": {
+            "type": "string"
+          },
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "action",
+          "name": "操作",
+          "valueType": {
+            "type": "enum",
+            "elements": [
+              {
+                "text": "播放",
+                "value": "Play",
+                "id": 0
+              },
+              {
+                "id": 2,
+                "value": "Pause",
+                "text": "暂停"
+              },
+              {
+                "id": 3,
+                "value": "Scale",
+                "text": "倍速"
+              },
+              {
+                "id": 4,
+                "value": "Drag",
+                "text": "拖放"
+              }
+            ]
+          },
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "scale",
+          "name": "倍速值",
+          "valueType": {
+            "type": "float",
+            "scale": 1
+          },
+          "description": "大于0快进，小于0快退",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "range",
+          "name": "拖放值",
+          "description": "单位（秒）",
+          "valueType": {
+            "type": "int"
+          },
+          "expands": {
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "QueryChannel",
+      "name": "查询通道列表",
+      "async": false,
+      "output": {
+        "type": "object",
+        "properties": [
+          {
+            "id": "total",
+            "name": "数据总量",
+            "valueType": {
+              "type": "int"
+            }
+          },
+          {
+            "id": "data",
+            "name": "通道列表",
+            "valueType": {
+              "type": "array",
+              "elementType": {
+                "type": "object",
+                "properties": [
+                  {
+                    "id": "id",
+                    "name": "通道ID",
+                    "valueType": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "id": "name",
+                    "name": "通道名称",
+                    "valueType": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "id": "options",
+                    "name": "其他配置",
+                    "valueType": {
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "inputs": [
+        {
+          "id": "pageIndex",
+          "name": "分页索引",
+          "description": "从0开始",
+          "valueType": {
+            "type": "int"
+          },
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "pageSize",
+          "name": "每页数量",
+          "valueType": {
+            "type": "int"
+          },
+          "expands": {
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "Preset",
+      "name": "预置位操作",
+      "async": false,
+      "output": {},
+      "inputs": [
+        {
+          "id": "operation",
+          "name": "操作类型",
+          "valueType": {
+            "type": "enum",
+            "elements": [
+              {
+                "text": "设置",
+                "value": "SET",
+                "id": 0
+              },
+              {
+                "id": 2,
+                "value": "CALL",
+                "text": "调用"
+              },
+              {
+                "id": 3,
+                "value": "DEL",
+                "text": "删除"
+              }
+            ]
+          },
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "id": "presetIndex",
+          "name": "序号",
+          "valueType": {
+            "type": "int"
+          },
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "id": "channel",
+          "name": "通道ID",
+          "valueType": {
+            "type": "string"
+          },
+          "expands": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "QueryPreset",
+      "name": "查询预置位",
+      "async": false,
+      "output": {
+        "type": "array",
+        "elementType": {
+          "type": "object",
+          "properties": [
+            {
+              "id": "id",
+              "name": "序号",
+              "valueType": {
+                "type": "string"
+              }
+            },
+            {
+              "id": "name",
+              "name": "名称",
+              "valueType": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      },
+      "inputs": []
+    },
+    {
+      "id": "HomePosition",
+      "name": "看守位控制",
+      "async": false,
+      "output": {},
+      "inputs": [
+        {
+          "id": "enabled",
+          "name": "是否启用",
+          "valueType": {
+            "type": "boolean",
+            "trueText": "是",
+            "trueValue": "true",
+            "falseText": "否",
+            "falseValue": "false"
+          },
+          "expands": {
+            "required": true
+          }
+        },
+        {
+          "id": "resetTime",
+          "name": "重置时间",
+          "valueType": {
+            "type": "int"
+          },
+          "description": "单位秒",
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "presetIndex",
+          "name": "预置位序号",
+          "valueType": {
+            "type": "int"
+          },
+          "expands": {
+            "required": false
+          }
+        },
+        {
+          "id": "channel",
+          "name": "通道ID",
+          "valueType": {
+            "type": "string"
+          },
+          "expands": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ]
+}

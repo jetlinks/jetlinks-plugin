@@ -1,28 +1,40 @@
 package org.jetlinks.plugin.example.sdk.hc;
 
-import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
-import org.jetlinks.plugin.example.sdk.MockHCNetSDK;
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+import org.hswebframework.web.exception.BusinessException;
+import org.jetlinks.plugin.example.sdk.LibUtils;
+import org.jetlinks.plugin.internal.media.MediaSdkChannelConfig;
+import org.jetlinks.plugin.internal.media.MediaSdkDeviceControl;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.sun.jna.Platform.isLinux;
+import static com.sun.jna.Platform.isWindows;
+import static org.jetlinks.plugin.example.sdk.hc.HCNetSDK.*;
 
 /**
  * @create 2020-07-27-10:42
  */
+@Slf4j
 public class NetSDKDemo {
-    static        HCNetSDK                                      hCNetSDK = null;
-    static        int                                           lUserID  = -1; //用户句柄
-    public static flowTestcallback                              flowcallback;
-    public static dev_work_state_cb                             workStateCb;
-    public static FExceptionCallBack_Imp                        fExceptionCallBack;
+    static HCNetSDK hCNetSDK = null;
+    static int lUserID = -1; //用户句柄
+    public static flowTestcallback flowcallback;
+    public static dev_work_state_cb workStateCb;
+    public static FExceptionCallBack_Imp fExceptionCallBack;
     public static Map<Integer, HCNetSDK.NET_DVR_ALARM_RS485CFG> rs485cfg = new HashMap<>();
-    public static Map<Integer, HCNetSDK.NET_DVR_PTZPOS>         ptzcfg   = new HashMap<>();
+    public static Map<Integer, HCNetSDK.NET_DVR_PTZPOS> ptzcfg = new HashMap<>();
+
 
     static class dev_work_state_cb implements HCNetSDK.DEV_WORK_STATE_CB {
         public boolean invoke(Pointer pUserdata,
@@ -60,19 +72,53 @@ public class NetSDKDemo {
         }
     }
 
+    @SneakyThrows
     public static void main(String[] args) {
         NetSDKDemo sdk = new NetSDKDemo();
-        sdk.initMockSDKInstance();
-        int userId = sdk.Login_V40("127.0.0.1", (short) 8000, "admin", "admin");
+        sdk.initSDKInstance();
+
+        Tuple2<Integer, HCNetSDK.NET_DVR_DEVICEINFO_V40> loginResult = sdk.Login_V40(
+                "192.168.33.157", (short) 8000, "admin", "p@ssw0rd"
+        );
+        Integer userId = loginResult.getT1();
+        HCNetSDK.NET_DVR_DEVICEINFO_V40 deviceinfo = loginResult.getT2();
         boolean online = sdk.getDeviceStatus(userId);
         System.out.println("在线：" + online);
-        HCNetSDK.NET_DVR_ALARM_RS485CFG rs485CFG = sdk.getRS485Cfg(userId);
-        System.out.println(rs485CFG);
-        System.out.println(new String(rs485CFG.sDeviceName));
-        rs485CFG.sDeviceName = "test222".getBytes(StandardCharsets.UTF_8);
-        sdk.setRS485Cfg(userId, rs485CFG);
-        System.out.println(new String(rs485CFG.sDeviceName));
+        int channel = deviceinfo.struDeviceV30.byChanNum;
 
+        List<HCNetSDK.NET_DVR_PRESET_NAME> presetNames = sdk.queryPreset(userId);
+        for (HCNetSDK.NET_DVR_PRESET_NAME data : presetNames) {
+            log.info("preset: {}, {}", String.valueOf(data.wPresetNum), new String(data.byName, "gbk"));
+        }
+
+        System.out.println(sdk.startRecord(userId, channel));
+        Thread.sleep(1000);
+        System.out.println(sdk.stopRecord(userId, channel));
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        List<NET_DVR_FINDDATA_V30> records = sdk
+                .queryRecord(
+                        userId,
+                        channel,
+                        LocalDateTime.parse("2023-11-03 00:00:00", formatter),
+                        LocalDateTime.parse("2023-11-03 23:59:59", formatter));
+        log.info("录像数量：{}", records.size());
+
+        int rtspPort = sdk.queryRtspPort(userId);
+        log.info("rtsp port: {}", rtspPort);
+
+        HCNetSDK.NET_DVR_ACCESS_DEVICE_CHANNEL_INFO channelInfo = sdk.queryChannel(
+                userId,
+                deviceinfo.struDeviceV30.byChanNum,
+                "192.168.33.157",
+                "p@ssw0rd",
+                "admin",
+                (short) 8000
+        );
+        log.info("通道数量：{}", channelInfo.dwTotalChannelNum + 1);
+
+//        LinkedList<Integer> channelNo = sdk.createDeviceTreeV40(userInfo.getUserId(), userInfo.getDeviceInfo());
+//        log.info("channel: {}", channelNo);
     }
 
 //    public static void main(String[] args) throws IOException, InterruptedException {
@@ -173,10 +219,10 @@ public class NetSDKDemo {
      * @param user 设备用户名
      * @param psw  设备密码
      */
-    public int Login_V40(String ip,
-                         short port,
-                         String user,
-                         String psw) {
+    public Tuple2<Integer, HCNetSDK.NET_DVR_DEVICEINFO_V40> Login_V40(String ip,
+                                                                      short port,
+                                                                      String user,
+                                                                      String psw) {
         //注册
         HCNetSDK.NET_DVR_USER_LOGIN_INFO m_strLoginInfo = new HCNetSDK.NET_DVR_USER_LOGIN_INFO();//设备登录信息
         HCNetSDK.NET_DVR_DEVICEINFO_V40 m_strDeviceInfo = new HCNetSDK.NET_DVR_DEVICEINFO_V40();//设备信息
@@ -199,18 +245,21 @@ public class NetSDKDemo {
         m_strLoginInfo.write();
 
         int iUserID = hCNetSDK.NET_DVR_Login_V40(m_strLoginInfo, m_strDeviceInfo);
-        if (iUserID == -1) {
+        if (iUserID < 0) {
             System.out.println("登录失败，错误码为" + hCNetSDK.NET_DVR_GetLastError());
-            return iUserID;
+            return null;
         } else {
-            System.out.println(ip + ":设备登录成功！");
-            return iUserID;
+            System.out.println(ip + ":设备登录成功！userId:" + iUserID);
+//            Map<String ,Object> userInfo = new HashMap<>();
+//            userInfo.put("userId", iUserID);
+//            userInfo.put("charset", m_strDeviceInfo.byCharEncodeType);
+            return Tuples.of(iUserID, m_strDeviceInfo);
         }
     }
 
     //设备在线状态监测
-    public boolean getDeviceStatus(int iUserID) {
-        return hCNetSDK.NET_DVR_RemoteControl(iUserID, HCNetSDK.NET_DVR_CHECK_USER_STATUS, null, 0);
+    public boolean getDeviceStatus(int lUserID) {
+        return hCNetSDK.NET_DVR_RemoteControl(lUserID, HCNetSDK.NET_DVR_CHECK_USER_STATUS, null, 0);
     }
 
     //设备抓图
@@ -277,7 +326,7 @@ public class NetSDKDemo {
         Pointer pStrDeviceCfg = m_strDeviceCfg.getPointer();
         IntByReference pInt = new IntByReference(0);
         boolean b_GetCfg = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_DEVICECFG_V40,
-                0Xffffffff, pStrDeviceCfg, m_strDeviceCfg.dwSize, pInt);
+                                                         0Xffffffff, pStrDeviceCfg, m_strDeviceCfg.dwSize, pInt);
         if (b_GetCfg == false) {
             System.out.println("获取参数失败  错误码：" + hCNetSDK.NET_DVR_GetLastError());
         }
@@ -292,13 +341,14 @@ public class NetSDKDemo {
         HCNetSDK.NET_DVR_TIME m_Time = new HCNetSDK.NET_DVR_TIME();
         Pointer pTime = m_Time.getPointer();
         IntByReference pInt = new IntByReference(0);
-        boolean b_GetTime = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_TIMECFG, 0xffffffff, pTime, m_Time.size(), pInt);
+        boolean b_GetTime = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_TIMECFG, 0xffffffff, pTime, m_Time
+                .size(), pInt);
         if (b_GetTime == false) {
             System.out.println("获取时间参数失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         }
         m_Time.read();
         System.out.println("年：" + m_Time.dwYear + "月:" + m_Time.dwMonth + "日:" + m_Time.dwDay + "时：" + m_Time.dwHour +
-                "分：" + m_Time.dwMinute + "秒：" + m_Time.dwSecond);
+                                   "分：" + m_Time.dwMinute + "秒：" + m_Time.dwSecond);
     }
 
     //获取设备的图像参数
@@ -310,7 +360,7 @@ public class NetSDKDemo {
         NativeLong lChannel = new NativeLong(1);
         IntByReference pInt = new IntByReference(0);
         boolean b_GetPicCfg = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_PICCFG_V40, lChannel.intValue(),
-                pStrPicCfg, strPicCfg.size(), pInt);
+                                                            pStrPicCfg, strPicCfg.size(), pInt);
         if (b_GetPicCfg == false) {
             System.out.println("获取图像参数失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         }
@@ -383,8 +433,10 @@ public class NetSDKDemo {
         struMrdSeaResu.dwSize = struMrdSeaResu.size();
         struMrdSeaResu.write();
         IntByReference list = new IntByReference(0);
-        boolean b_GetResult = hCNetSDK.NET_DVR_GetDeviceConfig(iUserID, HCNetSDK.NET_DVR_GET_MONTHLY_RECORD_DISTRIBUTION, 0, struMrdSeaParam.getPointer(),
-                struMrdSeaParam.size(), list.getPointer(), struMrdSeaResu.getPointer(), struMrdSeaResu.size());
+        boolean b_GetResult = hCNetSDK.NET_DVR_GetDeviceConfig(iUserID, HCNetSDK.NET_DVR_GET_MONTHLY_RECORD_DISTRIBUTION, 0, struMrdSeaParam
+                                                                       .getPointer(),
+                                                               struMrdSeaParam.size(), list.getPointer(), struMrdSeaResu
+                                                                       .getPointer(), struMrdSeaResu.size());
         if (b_GetResult == false) {
             System.out.println("月历录像查询失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         } else {
@@ -443,7 +495,8 @@ public class NetSDKDemo {
 //        String pHex="13669";
 //        int pInter=Integer.parseInt(pHex);
         struPtTZPos.write();
-        boolean b_SetPTZ = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_PTZPOS, 1, struPtTZPos.getPointer(), struPtTZPos.size());
+        boolean b_SetPTZ = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_PTZPOS, 1, struPtTZPos.getPointer(), struPtTZPos
+                .size());
         if (b_SetPTZ == false) {
             System.out.println("设置PTZ坐标信息失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         } else {
@@ -459,7 +512,8 @@ public class NetSDKDemo {
             if (struPtTZPos == null) {
                 struPtTZPos = new HCNetSDK.NET_DVR_PTZPOS();
                 IntByReference pUsers = new IntByReference(1);
-                boolean b_GetPTZ = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_PTZPOS, 1, struPtTZPos.getPointer(), struPtTZPos.size(), pUsers);
+                boolean b_GetPTZ = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_PTZPOS, 1, struPtTZPos.getPointer(), struPtTZPos
+                        .size(), pUsers);
             }
             return struPtTZPos;
         });
@@ -472,7 +526,8 @@ public class NetSDKDemo {
         HCNetSDK.NET_DVR_CAMERAPARAMCFG_EX struCameraParam = new HCNetSDK.NET_DVR_CAMERAPARAMCFG_EX();
         Pointer pstruCameraParam = struCameraParam.getPointer();
         IntByReference ibrBytesReturned = new IntByReference(0);
-        boolean b_GetCameraParam = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_CCDPARAMCFG_EX, 1, pstruCameraParam, struCameraParam.size(), ibrBytesReturned);
+        boolean b_GetCameraParam = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_CCDPARAMCFG_EX, 1, pstruCameraParam, struCameraParam
+                .size(), ibrBytesReturned);
         if (!b_GetCameraParam) {
             System.out.println("获取前端参数失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         }
@@ -481,7 +536,8 @@ public class NetSDKDemo {
 
         struCameraParam.struCorridorMode.byEnableCorridorMode = 1;
         struCameraParam.write();
-        boolean b_SetCameraParam = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_CCDPARAMCFG_EX, 1, pstruCameraParam, struCameraParam.size());
+        boolean b_SetCameraParam = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_CCDPARAMCFG_EX, 1, pstruCameraParam, struCameraParam
+                .size());
         if (!b_SetCameraParam) {
             System.out.println("设置前端参数失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         }
@@ -497,7 +553,8 @@ public class NetSDKDemo {
         struFocusMode.write();
         Pointer pFocusMode = struFocusMode.getPointer();
         IntByReference ibrBytesReturned = new IntByReference(0);
-        boolean b_GetCameraParam = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_FOCUSMODECFG, 1, pFocusMode, struFocusMode.size(), ibrBytesReturned);
+        boolean b_GetCameraParam = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_FOCUSMODECFG, 1, pFocusMode, struFocusMode
+                .size(), ibrBytesReturned);
         if (!b_GetCameraParam) {
             System.out.println("获取快球聚焦模式失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         }
@@ -507,7 +564,8 @@ public class NetSDKDemo {
         struFocusMode.byFocusDefinitionDisplay = 1;
         struFocusMode.byFocusSpeedLevel = 3;
         struFocusMode.write();
-        boolean b_SetCameraParam = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_FOCUSMODECFG, 1, pFocusMode, struFocusMode.size());
+        boolean b_SetCameraParam = hCNetSDK.NET_DVR_SetDVRConfig(iUserID, HCNetSDK.NET_DVR_SET_FOCUSMODECFG, 1, pFocusMode, struFocusMode
+                .size());
         if (!b_SetCameraParam) {
             System.out.println("设置快球聚焦模式失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
         }
@@ -522,7 +580,8 @@ public class NetSDKDemo {
         m_strIpparaCfg.write();
         //lpIpParaConfig 接收数据的缓冲指针
         Pointer lpIpParaConfig = m_strIpparaCfg.getPointer();
-        boolean bRet = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_IPPARACFG_V40, 0, lpIpParaConfig, m_strIpparaCfg.size(), ibrBytesReturned);
+        boolean bRet = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_IPPARACFG_V40, 0, lpIpParaConfig, m_strIpparaCfg
+                .size(), ibrBytesReturned);
         m_strIpparaCfg.read();
         System.out.println("起始数字通道号：" + m_strIpparaCfg.dwStartDChan);
 
@@ -601,7 +660,8 @@ public class NetSDKDemo {
         IntByReference lpBytesReturned = new IntByReference(0);
         //3251对应它的宏定义
         boolean bRet = hCNetSDK.NET_DVR_GetDeviceConfig(iUserID, 3251, 1, lpInBuffer,
-                streamInfo.size(), lpBytesReturned.getPointer(), lpOutBuffer, gbt28181ChaninfoCfg.size());
+                                                        streamInfo.size(), lpBytesReturned.getPointer(), lpOutBuffer, gbt28181ChaninfoCfg
+                                                                .size());
         gbt28181ChaninfoCfg.read();
 
         if (bRet == false) {
@@ -617,7 +677,7 @@ public class NetSDKDemo {
         Pointer pnet_dvr_aes_key_info = net_dvr_aes_key_info.getPointer();
         IntByReference pInt = new IntByReference(0);
         boolean b_GetCfg = hCNetSDK.NET_DVR_GetDVRConfig(iUserID, HCNetSDK.NET_DVR_GET_AES_KEY,
-                0Xffffffff, pnet_dvr_aes_key_info, net_dvr_aes_key_info.size(), pInt);
+                                                         0Xffffffff, pnet_dvr_aes_key_info, net_dvr_aes_key_info.size(), pInt);
         if (b_GetCfg == false) {
             System.out.println("获取码流加密失败  错误码：" + hCNetSDK.NET_DVR_GetLastError());
         }
@@ -646,7 +706,8 @@ public class NetSDKDemo {
         Pointer lpStatusList = pInt.getPointer();
 
         boolean flag = hCNetSDK.NET_DVR_GetDeviceConfig(iUserID, 6714, 1,
-                struCruisepointCond.getPointer(), struCruisepointCond.size(), lpStatusList, struCruisepointV40.getPointer(), struCruisepointV40.size());
+                                                        struCruisepointCond.getPointer(), struCruisepointCond.size(), lpStatusList, struCruisepointV40
+                                                                .getPointer(), struCruisepointV40.size());
         if (flag == false) {
             int iErr = hCNetSDK.NET_DVR_GetLastError();
             System.out.println("NET_DVR_STDXMLConfig失败，错误号：" + iErr);
@@ -729,10 +790,309 @@ public class NetSDKDemo {
 
     }
 
-    public boolean initMockSDKInstance() {
+    public LPNET_DVR_LINK_ADDR realPlay(int userId , MediaSdkChannelConfig config) {
+        int lLinkHandle = preview(userId, config);
+        LPNET_DVR_LINK_ADDR lpLinkAddr = new LPNET_DVR_LINK_ADDR();
+        hCNetSDK.NET_DVR_GetLinkAddr(lLinkHandle, 1, lpLinkAddr);
+        return lpLinkAddr;
+    }
+
+    public LPNET_DVR_LINK_ADDR playback(int userId , MediaSdkChannelConfig config) {
+        int lLinkHandle = preview(userId, config);
+        LPNET_DVR_LINK_ADDR lpLinkAddr = new LPNET_DVR_LINK_ADDR();
+        hCNetSDK.NET_DVR_GetLinkAddr(lLinkHandle, 2, lpLinkAddr);
+        return lpLinkAddr;
+    }
+
+    private LPNET_DVR_LINK_ADDR getStreamAddr(int userId , MediaSdkChannelConfig config, int enumLinkKind) {
+        int lLinkHandle = preview(userId, config);
+        LPNET_DVR_LINK_ADDR lpLinkAddr = new LPNET_DVR_LINK_ADDR();
+        hCNetSDK.NET_DVR_GetLinkAddr(lLinkHandle, enumLinkKind, lpLinkAddr);
+        return lpLinkAddr;
+    }
+
+    public LinkedList<Integer> createDeviceTreeV40(int userId, HCNetSDK.NET_DVR_DEVICEINFO_V40 deviceinfo) {
+        LinkedList<Integer> channelNo = new LinkedList<>();
+        HCNetSDK.NET_DVR_DEVICEINFO_V30 strDeviceInfo = deviceinfo.struDeviceV30;
+        IntByReference ibrBytesReturned = new IntByReference(0);// get ip param
+        HCNetSDK.NET_DVR_IPPARACFG strIpparaCfg = new HCNetSDK.NET_DVR_IPPARACFG();
+        Pointer lpIpParaConfig = strIpparaCfg.getPointer();
+        boolean bRet = hCNetSDK.NET_DVR_GetDVRConfig(userId, HCNetSDK.NET_DVR_GET_IPPARACFG, 1, lpIpParaConfig,
+                                                     strIpparaCfg.size(), ibrBytesReturned);
+        log.info("获取设备信息：{}", bRet);
+        strIpparaCfg.read();
+        if (!bRet) {
+            // device not support,has no ip camera
+            for (int iChannum = 0; iChannum < strDeviceInfo.byChanNum; iChannum++) {
+                log.info("通道号：{}", iChannum + strDeviceInfo.byStartChan + 32);
+                channelNo.add(iChannum + strDeviceInfo.byStartChan + 32);
+            }
+        } else {
+            // ip camera
+            for (int iChannum = 0; iChannum < strDeviceInfo.byChanNum; iChannum++) {
+                {
+                    log.info("通道号：{}", iChannum + strDeviceInfo.byStartChan + 32);
+                    channelNo.add(iChannum + strDeviceInfo.byStartChan + 32);
+                }
+            }
+            for (int iChannum = 0; iChannum < strDeviceInfo.byIPChanNum; iChannum++) {
+                log.info("通道号：{}", iChannum + strDeviceInfo.byStartChan + 32);
+                channelNo.add(iChannum + strDeviceInfo.byStartChan + 32);
+            }
+        }
+        return channelNo;
+    }
+
+    // 查询rtsp端口
+    public int queryRtspPort(int lUserID) {
+        HCNetSDK.NET_DVR_RTSPCFG rtspcfg = new HCNetSDK.NET_DVR_RTSPCFG();
+        rtspcfg.dwSize = rtspcfg.size();
+
+        hCNetSDK.NET_DVR_GetRtspConfig(lUserID, 0, rtspcfg, rtspcfg.size());
+        return rtspcfg.wPort;
+    }
+
+    // 查询通道
+    public HCNetSDK.NET_DVR_ACCESS_DEVICE_CHANNEL_INFO queryChannel(int iUserID,
+                                                                    int dwChannel,
+                                                                    String userName,
+                                                                    String password,
+                                                                    String ip,
+                                                                    short port) {
+        HCNetSDK.NET_DVR_ACCESS_DEVICE_INFO accessDevice = new HCNetSDK.NET_DVR_ACCESS_DEVICE_INFO();
+        accessDevice.read();
+        accessDevice.dwSize = accessDevice.size();
+        System.arraycopy(userName.getBytes(), 0, accessDevice.sUserName, 0, userName.length());
+        System.arraycopy(password.getBytes(), 0, accessDevice.szPassword, 0, password.length());
+        HCNetSDK.NET_DVR_IPADDR ipaddr = new HCNetSDK.NET_DVR_IPADDR();
+        System.arraycopy(ip.getBytes(), 0, ipaddr.sIpV4, 0, ip.length());
+        accessDevice.wPort = port;
+        //通道号说明：一般IPC/IPD通道号为1，32路以及以下路数的NVR的IP通道通道号从33开始，64路及以上路数的NVR的IP通道通道号从1开始。
+        accessDevice.write();
+
+        HCNetSDK.NET_DVR_ACCESS_DEVICE_CHANNEL_INFO info = new HCNetSDK.NET_DVR_ACCESS_DEVICE_CHANNEL_INFO();
+        info.read();
+        info.dwSize = info.size();
+        info.write();
+        IntByReference list = new IntByReference(0);
+        boolean b_GetResult = hCNetSDK.NET_DVR_GetDeviceConfig(iUserID,
+                                                               HCNetSDK.NET_DVR_GET_ACCESS_DEVICE_CHANNEL_INFO,
+                                                               dwChannel,
+                                                               accessDevice.getPointer(),
+                                                               accessDevice.size(),
+                                                               list.getPointer(),
+                                                               info.getPointer(),
+                                                               info.size());
+        if (b_GetResult == false) {
+            System.out.println("设备通道查询失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
+        } else {
+            info.read();
+        }
+        return info;
+    }
+
+    // 查询预置位
+    public List<HCNetSDK.NET_DVR_PRESET_NAME> queryPreset(int lUserID) {
+
+        HCNetSDK.NET_DVR_PRESET_NAME presetName = new HCNetSDK.NET_DVR_PRESET_NAME();
+        presetName.dwSize = presetName.size();
+        presetName.write();
+        Pointer pointer = presetName.getPointer();
+
+        IntByReference pInt = new IntByReference(0);
+        boolean result = hCNetSDK.NET_DVR_GetDVRConfig(lUserID, HCNetSDK.NET_DVR_GET_PRESET_NAME, 0xFFFFFFFF,
+                                                       pointer, presetName.size(), pInt);
+        System.out.println(pInt.getValue());
+//        HCNetSDK.NET_DVR_PRESET_NAME[] presetNames = (HCNetSDK.NET_DVR_PRESET_NAME[])presetName.toArray(10);
+//        Pointer[] pointers = new Pointer[300];
+//        for (int i = 0; i < presetNames.length; i++) {
+//            pointers[i] = presetNames[i].getPointer();
+//        }
+//        pointer.read(0, pointers, 0, 300);
+        if (!result) {
+            log.error("获取预置位失败，错误码：" + hCNetSDK.NET_DVR_GetLastError());
+        }
+
+        presetName.read();
+
+        // TODO: 2023/10/20 返回列表。如何从一个pointer读取结构体数组？
+        return Arrays.asList(presetName);
+    }
+
+    // 预置位控制
+    public boolean presetControl(int userId, MediaSdkDeviceControl control) {
+        int dwPTZPresetCmd = getPTZPresetCmd(control.getPresetOperation());
+        int channel = Integer.parseInt(control.getChannelId());
+        // 不用启动预览
+        return hCNetSDK.NET_DVR_PTZPreset_Other(
+                userId, channel, dwPTZPresetCmd, control.getPresetIndex()
+        );
+    }
+
+    private int getPTZPresetCmd(MediaSdkDeviceControl.PresetOperation operation) {
+        switch (operation) {
+            case DEL:
+                return HCNetSDK.CLE_PRESET;
+            case SET:
+                return HCNetSDK.SET_PRESET;
+            case CALL:
+                return HCNetSDK.GOTO_PRESET;
+            default:
+                throw new BusinessException("不支持的预置位操作：{}", operation.name());
+        }
+    }
+
+    // 云台控制
+    public PtzCommand ptzControl(int userId, MediaSdkDeviceControl control, int lastCmd) {
+        int channel = Integer.parseInt(control.getChannelId());
+        PtzCommand ptzCommand = getPTZCmd(control.getPtzCommand(), lastCmd);
+
+        ptzCommand.success = hCNetSDK.NET_DVR_PTZControlWithSpeed_Other(
+                userId, channel, ptzCommand.command, ptzCommand.stop, ptzCommand.speed
+        );
+        return ptzCommand;
+    }
+
+    @Getter
+    @Setter
+    public static class PtzCommand {
+
+        int command;
+        // 0：启动，1：停止
+        int stop;
+        // 范围[1 - 7]
+        int speed;
+
+        boolean success;
+    }
+
+    /**
+     * 获取控制指令
+     * @param ptzCommand 指令集合
+     * @param lastCmd 缓存的上一次指令
+     * @return 指令
+     */
+    private PtzCommand getPTZCmd(Map<String, Integer> ptzCommand, int lastCmd) {
+        PtzCommand cmd = new PtzCommand();
+        Set<MediaSdkDeviceControl.PtzCommand> directions = ptzCommand
+                .keySet()
+                .stream()
+                .map(String::toUpperCase)
+                .map(MediaSdkDeviceControl.PtzCommand::valueOf)
+                .collect(Collectors.toSet());
+
+
+        if (directions.contains(MediaSdkDeviceControl.PtzCommand.STOP)) {
+            cmd.stop = 1;
+            cmd.command = lastCmd;
+        } else {
+            cmd.command = doGetPtzCmd(directions);
+        }
+        cmd.speed = ptzCommand.values().stream().findFirst().map(value -> value * 7 / 180).orElse(1);
+        return cmd;
+    }
+
+    private int doGetPtzCmd(Set<MediaSdkDeviceControl.PtzCommand> directions) {
+        // 只实现了最多2个方向的控制
+        if (directions.size() <= 2) {
+            if (directions.contains(MediaSdkDeviceControl.PtzCommand.UP)) {
+                if (directions.contains(MediaSdkDeviceControl.PtzCommand.LEFT)) {
+                    return UP_LEFT;
+                }
+                if (directions.contains(MediaSdkDeviceControl.PtzCommand.RIGHT)) {
+                    return UP_RIGHT;
+                }
+                return TILT_UP;
+            }
+            if (directions.contains(MediaSdkDeviceControl.PtzCommand.DOWN)) {
+                if (directions.contains(MediaSdkDeviceControl.PtzCommand.LEFT)) {
+                    return DOWN_LEFT;
+                }
+                if (directions.contains(MediaSdkDeviceControl.PtzCommand.RIGHT)) {
+                    return DOWN_RIGHT;
+                }
+                return TILT_DOWN;
+            }
+            if (directions.contains(MediaSdkDeviceControl.PtzCommand.LEFT)) {
+                return PAN_LEFT;
+            }
+            if (directions.contains(MediaSdkDeviceControl.PtzCommand.RIGHT)) {
+                return PAN_RIGHT;
+            }
+            if (directions.contains(MediaSdkDeviceControl.PtzCommand.ZOOM_IN)) {
+                return ZOOM_IN;
+            }
+            if (directions.contains(MediaSdkDeviceControl.PtzCommand.ZOOM_OUT)) {
+                return ZOOM_OUT;
+            }
+        }
+
+        throw new BusinessException("暂不支持此指令：" + directions);
+    }
+
+    // 预览
+    private int preview(int userId, MediaSdkChannelConfig config) {
+        // 预览设置
+        HCNetSDK.NET_DVR_PREVIEWINFO streamInfo = new HCNetSDK.NET_DVR_PREVIEWINFO();
+        streamInfo.hPlayWnd = null; //null表示不播放视频
+        streamInfo.lChannel = Integer.parseInt(config.getChannel()); //通道号
+        streamInfo.dwStreamType = (int) config.getExtraConfig("dwStreamType", 0); //码流类型
+        streamInfo.dwLinkMode = (int) config.getExtraConfig("dwLinkMode", 3); //流传输模式
+        streamInfo.bBlocked = 1; //阻塞取流
+        // 开始预览
+        return hCNetSDK.NET_DVR_RealPlay_V40(userId, streamInfo, null, null);
+    }
+
+    // 开始录像
+    public boolean startRecord(int userId, int channel) {
+        // 录像类型：0- 手动，1- 报警，2- 回传，3- 信号，4- 移动，5- 遮挡
+        return hCNetSDK.NET_DVR_StartDVRRecord(userId, channel, 0);
+    }
+
+    // 停止录像
+    public boolean stopRecord(int userId, int channel) {
+        return hCNetSDK.NET_DVR_StopDVRRecord(userId, channel);
+    }
+
+
+    // 查询录像文件
+    public List<NET_DVR_FINDDATA_V30> queryRecord(int userId, int channel, LocalDateTime start, LocalDateTime stop) {
+
+        NET_DVR_FILECOND param = new NET_DVR_FILECOND();
+        param.lChannel = channel;
+        param.struStartTime = NET_DVR_TIME.of(start);
+        param.struStopTime = NET_DVR_TIME.of(stop);
+        param.dwFileType = 0XFF; //要查找的文件类型：0xFF－全部；0－定时录像；1—移动侦测；2－接近报警；3－出钞报警；4－进钞报警；5—命令触发；6－手动录像；7－震动报警；8-环境报警；9-智能报警
+        param.dwIsLocked = 0XFF;
+
+        int findHandle = hCNetSDK.NET_DVR_FindFile_V30(userId, param);
+        if (findHandle == -1) {
+            throw new BusinessException("查询录像失败。code：" + hCNetSDK.NET_DVR_GetLastError());
+        }
+
+        List<NET_DVR_FINDDATA_V30> list = new ArrayList<>();
+        int status;
+        do {
+            NET_DVR_FINDDATA_V30 data = new NET_DVR_FINDDATA_V30();
+            status = hCNetSDK.NET_DVR_FindNextFile_V30(findHandle, data);
+            if (status == NET_DVR_FILE_SUCCESS) {
+                data.read();
+                list.add(data);
+            }
+        } while (status == NET_DVR_FILE_SUCCESS || status == NET_DVR_ISFINDING);
+
+        hCNetSDK.NET_DVR_FindClose_V30(findHandle);
+
+        return list;
+    }
+
+    public boolean initSDKInstance() {
         if (hCNetSDK == null) {
             synchronized (HCNetSDK.class) {
-                hCNetSDK = new MockHCNetSDK();
+                if (!CreateSDKInstance()) {
+                    System.out.println("Load SDK fail");
+                    return false;
+                }
             }
         }
         //SDK初始化，一个程序进程只需要调用一次
@@ -750,6 +1110,43 @@ public class NetSDKDemo {
         hCNetSDK.NET_DVR_SetLogToFile(3, "..\\sdkLog", false);
 
         return true;
+    }
+
+    /**
+     * 动态库加载
+     *
+     * @return
+     */
+    private static boolean CreateSDKInstance() {
+        if (hCNetSDK == null) {
+            synchronized (HCNetSDK.class) {
+                LibUtils.copyLibFile();
+                String strDllPath = "";
+                try {
+                    if (isWindows()) {
+                        //win系统加载库路径
+                        strDllPath = System.getProperty("user.dir") + "\\data\\plugins\\lib\\HCNetSDK.dll";
+                    } else if (isLinux()) {
+                        //Linux系统加载库路径
+                        strDllPath = System.getProperty("user.dir") + "/lib/libhcnetsdk.so";
+                    }
+
+                    hCNetSDK = (HCNetSDK) Native.loadLibrary(strDllPath, HCNetSDK.class);
+                } catch (Exception ex) {
+                    System.out.println("loadLibrary: " + strDllPath + " Error: " + ex.getMessage());
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Getter
+    @Setter
+    public static class DeviceInfo {
+
+        private int charset;
+
     }
 }
 

@@ -16,8 +16,6 @@ import java.util.Map;
  */
 public interface PluginProduct {
 
-    String USERNAME    = "user";
-    String PASSWORD    = "psw";
     ConfigKey<Boolean> required = ConfigKey.of("required", "是否必填", Boolean.TYPE);
 
     String getId();

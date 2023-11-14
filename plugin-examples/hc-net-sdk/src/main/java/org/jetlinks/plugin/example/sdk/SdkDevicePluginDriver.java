@@ -2,15 +2,13 @@ package org.jetlinks.plugin.example.sdk;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jetlinks.core.metadata.DefaultConfigMetadata;
-import org.jetlinks.core.metadata.types.IntType;
-import org.jetlinks.core.metadata.types.StringType;
 import org.jetlinks.plugin.core.Description;
 import org.jetlinks.plugin.core.PluginContext;
 import org.jetlinks.plugin.core.Version;
 import org.jetlinks.plugin.core.VersionRange;
 import org.jetlinks.plugin.internal.device.DeviceGatewayPlugin;
-import org.jetlinks.plugin.internal.device.DeviceGatewayPluginDriver;
 import org.jetlinks.plugin.internal.device.DeviceProduct;
+import org.jetlinks.plugin.internal.media.MediaGatewayPluginDriver;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -25,7 +23,7 @@ import static org.jetlinks.plugin.example.sdk.SdkDevicePlugin.pluginProducts;
  * @author zhangji 2023/3/6
  */
 @Slf4j
-public class SdkDevicePluginDriver implements DeviceGatewayPluginDriver {
+public class SdkDevicePluginDriver extends MediaGatewayPluginDriver {
 
     static Version version_1_0 = new Version(1, 0, 0, true);
 
@@ -42,8 +40,6 @@ public class SdkDevicePluginDriver implements DeviceGatewayPluginDriver {
                 Collections.singletonMap(
                         PLUGIN_CONFIG_METADATA,
                         new DefaultConfigMetadata()
-                                .add(SdkDevicePlugin.IP, "设备ip", StringType.GLOBAL)
-                                .add(SdkDevicePlugin.PORT, "设备端口", IntType.GLOBAL)
                 )
         );
     }
@@ -58,8 +54,12 @@ public class SdkDevicePluginDriver implements DeviceGatewayPluginDriver {
     @Override
     public Flux<DeviceProduct> getSupportProducts() {
         return Flux
-                .fromIterable(pluginProducts.values())
-                .map(PluginProduct::getDeviceProduct);
+                .concat(
+                        super.getSupportProducts(),
+                        Flux
+                                .fromIterable(pluginProducts.values())
+                                .map(PluginProduct::getDeviceProduct)
+                );
     }
 
 }

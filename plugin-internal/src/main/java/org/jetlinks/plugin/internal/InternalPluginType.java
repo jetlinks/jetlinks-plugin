@@ -10,7 +10,8 @@ import org.jetlinks.plugin.core.PluginType;
 public enum InternalPluginType implements PluginType, I18nEnumDict<String> {
 
     deviceGateway("设备接入网关"),
-    thingsManager("物管理");
+    thingsManager("物管理"),
+    mediaGateway("视频设备接入网关");
 
     private final String name;
 
