@@ -30,4 +30,15 @@ public interface PluginDataIdMapper {
      */
     Mono<String> getExternalId(String type, String pluginId, String internalId);
 
+    /**
+     * 获取插件全部的映射信息
+     * @param type 类型,如: device,product
+     * @param pluginId 插件ID
+     * @return 映射信息
+     */
+    default Flux<PluginDataMapping> getMappings(String type, String pluginId){
+        return Flux.empty();
+    }
+
+
 }
