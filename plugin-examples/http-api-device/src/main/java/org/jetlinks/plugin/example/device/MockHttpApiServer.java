@@ -32,9 +32,9 @@ public class MockHttpApiServer {
         private final Map<String, HttpApiDevicePlugin.DeviceInfo> cache = new ConcurrentHashMap<>();
 
         public DeviceController() {
-            cache.put("device_1", new HttpApiDevicePlugin.DeviceInfo("device_1", true, null));
-            cache.put("device_2", new HttpApiDevicePlugin.DeviceInfo("device_2", true, null));
-            cache.put("device_3", new HttpApiDevicePlugin.DeviceInfo("device_3", true, null));
+            cache.put("device_1", new HttpApiDevicePlugin.DeviceInfo("device_1", "设备1", true, null));
+            cache.put("device_2", new HttpApiDevicePlugin.DeviceInfo("device_2", "设备2",true, null));
+            cache.put("device_3", new HttpApiDevicePlugin.DeviceInfo("device_3", "设备3",true, null));
         }
 
         @PostMapping("/device/{deviceId}/properties")
@@ -44,7 +44,7 @@ public class MockHttpApiServer {
                     .doOnNext(prop -> cache
                             .compute(deviceId, (key, info) -> {
                                 if (info == null) {
-                                    return new HttpApiDevicePlugin.DeviceInfo(key, true, prop);
+                                    return new HttpApiDevicePlugin.DeviceInfo(key, key, true, prop);
                                 } else {
                                     Map<String, Object> merge = new HashMap<>();
                                     if (info.getProperties() != null) {
@@ -76,7 +76,7 @@ public class MockHttpApiServer {
         public Flux<HttpApiDevicePlugin.DeviceInfo> getDeviceStates(@RequestBody Mono<List<String>> devices) {
             return devices
                     .flatMapIterable(Function.identity())
-                    .map(id -> cache.getOrDefault(id, new HttpApiDevicePlugin.DeviceInfo(id, true, null)));
+                    .map(id -> cache.getOrDefault(id, new HttpApiDevicePlugin.DeviceInfo(id, id, true, null)));
         }
 
         //获取设备

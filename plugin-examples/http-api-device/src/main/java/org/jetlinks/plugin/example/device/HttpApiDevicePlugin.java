@@ -96,6 +96,7 @@ class HttpApiDevicePlugin extends DeviceGatewayPlugin {
                 .map(deviceInfo -> {
                     Device device = new Device();
                     device.setId(deviceInfo.getId());
+                    device.setName(deviceInfo.getName());
                     return device;
                 })
                 .collectList()
@@ -113,6 +114,7 @@ class HttpApiDevicePlugin extends DeviceGatewayPlugin {
                 .map(deviceInfo -> {
                     Device device = new Device();
                     device.setId(deviceInfo.getId());
+                    device.setName(deviceInfo.getName());
                     return device;
                 });
     }
@@ -216,6 +218,7 @@ class HttpApiDevicePlugin extends DeviceGatewayPlugin {
     @NoArgsConstructor
     public static class DeviceInfo {
         private String id;
+        private String name;
         private boolean online;
 
         private Map<String, Object> properties;
