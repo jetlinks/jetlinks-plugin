@@ -14,6 +14,7 @@
     <modules>
         <module>http-api-device</module>
         <module>hc-net-sdk</module>
+        <module>rule-engine-plugin</module>
     </modules>
 
 

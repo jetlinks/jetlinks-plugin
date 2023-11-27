@@ -196,6 +196,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.jetlinks</groupId>
+                <artifactId>rule-engine-api</artifactId>
+                <version>${jetlinks.core.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>io.projectreactor</groupId>
                 <artifactId>reactor-bom</artifactId>
                 <version>${reactor.version}</version>
