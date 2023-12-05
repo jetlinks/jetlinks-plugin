@@ -1,6 +1,5 @@
 package org.jetlinks.plugin.internal.device;
 
-import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.device.DeviceOperator;
 import org.jetlinks.core.device.DeviceProductOperator;
 import org.jetlinks.core.device.DeviceRegistry;
@@ -11,6 +10,8 @@ import org.jetlinks.plugin.core.PluginContext;
 import org.jetlinks.plugin.core.PluginScheduler;
 import org.jetlinks.plugin.core.PluginType;
 import org.jetlinks.plugin.internal.InternalPluginType;
+import org.jetlinks.plugin.internal.device.command.GetDeviceConfigMetadataCommand;
+import org.jetlinks.plugin.internal.device.command.GetProductConfigMetadataCommand;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,17 +35,19 @@ public abstract class DeviceGatewayPlugin extends AbstractPlugin {
         super(id, context);
 
         gatewayService = context
-                .services()
-                .getServiceNow(PluginDeviceGatewayService.class);
+            .services()
+            .getServiceNow(PluginDeviceGatewayService.class);
 
         registry = context
-                .services()
-                .getServiceNow(DeviceRegistry.class);
+            .services()
+            .getServiceNow(DeviceRegistry.class);
 
         deviceManager = context
-                .services()
-                .getServiceNow(PluginDeviceManager.class);
+            .services()
+            .getServiceNow(PluginDeviceManager.class);
 
+        registerHandler(GetDeviceConfigMetadataCommand.createHandler(cmd -> this.getDeviceConfigMetadata(cmd.getDeviceId())));
+        registerHandler(GetProductConfigMetadataCommand.createHandler(cmd -> this.getProductConfigMetadata(cmd.getProductId())));
     }
 
     public Publisher<? extends DeviceMessage> execute(DeviceMessage message) {
