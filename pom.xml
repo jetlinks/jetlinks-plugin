@@ -11,6 +11,7 @@
     <modules>
         <module>plugin-core</module>
         <module>plugin-internal</module>
+        <module>plugin-generator</module>
     </modules>
 
     <name>JetLinks Plugin</name>
