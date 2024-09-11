@@ -45,5 +45,10 @@
             <version>${reactor.ql.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.jetlinks.sdk</groupId>
+            <artifactId>jetlinks-sdk-api</artifactId>
+        </dependency>
+
     </dependencies>
 </project>

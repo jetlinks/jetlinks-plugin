@@ -23,7 +23,12 @@ public enum InternalPluginType implements PluginType, I18nEnumDict<String> {
      * @see org.jetlinks.plugin.internal.functional.FunctionalPlugin
      */
     standalone("独立运行"),
-    media("视频接入网关");
+    media("视频接入网关"),
+
+    /**
+     * @see org.jetlinks.plugin.internal.ai.AiPlugin
+     */
+    ai("AI");
 
     private final String name;
 
