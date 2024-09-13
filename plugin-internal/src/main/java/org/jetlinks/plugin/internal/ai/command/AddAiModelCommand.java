@@ -6,12 +6,12 @@ import org.jetlinks.core.command.AbstractConvertCommand;
 import org.jetlinks.core.command.CommandMetadataResolver;
 import org.jetlinks.core.metadata.FunctionMetadata;
 import org.jetlinks.sdk.server.ai.model.AiModelInfo;
-import org.jetlinks.sdk.server.ai.model.AiModelOperationResults;
+import org.jetlinks.sdk.server.ai.model.AiModelPortrait;
 import reactor.core.publisher.Mono;
 
 
 @Schema(title = "添加AI模型")
-public class AddAiModelCommand extends AbstractConvertCommand<Mono<AiModelOperationResults>, AddAiModelCommand> {
+public class AddAiModelCommand extends AbstractConvertCommand<Mono<AiModelPortrait>, AddAiModelCommand> {
 
     @Schema(title = "模型信息")
     public AiModelInfo getModel() {
@@ -23,7 +23,7 @@ public class AddAiModelCommand extends AbstractConvertCommand<Mono<AiModelOperat
         this.readable().put("model", model);
     }
 
-    public static FunctionMetadata metadata(){
+    public static FunctionMetadata metadata() {
         return CommandMetadataResolver.resolve(AddAiModelCommand.class);
     }
 }

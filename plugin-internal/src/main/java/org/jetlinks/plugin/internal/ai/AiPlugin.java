@@ -5,12 +5,15 @@ import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.command.CommandSupport;
 import org.jetlinks.plugin.core.AbstractPlugin;
 import org.jetlinks.plugin.core.PluginContext;
+import org.jetlinks.plugin.internal.ai.command.AddAiModelCommand;
 import org.jetlinks.plugin.internal.ai.command.GetAiDomainCommand;
+import org.jetlinks.plugin.internal.ai.command.RemoveAiModelCommand;
 import org.jetlinks.sdk.server.SdkServices;
 import org.jetlinks.sdk.server.ai.AiCommandSupports;
 import org.jetlinks.sdk.server.ai.AiDomain;
 import org.jetlinks.sdk.server.ai.cv.ImageRecognitionCommand;
 import org.jetlinks.sdk.server.ai.model.AiModelInfo;
+import org.jetlinks.sdk.server.ai.model.AiModelPortrait;
 import org.jetlinks.sdk.server.commons.cmd.QueryListCommand;
 import org.jetlinks.sdk.server.file.DownloadFileCommand;
 import org.jetlinks.sdk.server.utils.ConverterUtils;
@@ -51,6 +54,20 @@ public abstract class AiPlugin extends AbstractPlugin {
                             GetAiDomainCommand::new
                         ));
 
+        registerHandler(AddAiModelCommand.class,
+                        CommandHandler.of(
+                            AddAiModelCommand.metadata(),
+                            (cmd, that) -> addModel(cmd.getModel()),
+                            AddAiModelCommand::new
+                        ));
+
+        registerHandler(RemoveAiModelCommand.class,
+                        CommandHandler.of(
+                            RemoveAiModelCommand.metadata(),
+                            (cmd, that) -> removeModel(cmd.getId()),
+                            RemoveAiModelCommand::new
+                        ));
+
     }
 
     /**
@@ -59,6 +76,18 @@ public abstract class AiPlugin extends AbstractPlugin {
      * @return AiDomain
      */
     public abstract AiDomain getDomain();
+
+    /**
+     * 添加模型
+     *
+     * @return 解析后的模型画像
+     */
+    public abstract Mono<AiModelPortrait> addModel(AiModelInfo model);
+
+    /**
+     * 移除模型
+     */
+    public abstract Mono<Void> removeModel(String modelId);
 
     /**
      * 获取平台提供命令的服务
