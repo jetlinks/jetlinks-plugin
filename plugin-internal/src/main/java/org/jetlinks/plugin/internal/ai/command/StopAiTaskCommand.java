@@ -1,13 +1,14 @@
 package org.jetlinks.plugin.internal.ai.command;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.jetlinks.core.command.AbstractCommand;
 import org.jetlinks.core.command.AbstractConvertCommand;
 import org.jetlinks.core.command.CommandMetadataResolver;
 import org.jetlinks.core.metadata.FunctionMetadata;
 import reactor.core.publisher.Mono;
 
 @Schema(title = "停止任务")
-public class StopAiTaskCommand extends AbstractConvertCommand<Mono<Void>, StopAiTaskCommand> {
+public class StopAiTaskCommand extends AbstractCommand<Mono<Void>, StopAiTaskCommand> {
 
     public static FunctionMetadata metadata() {
         return CommandMetadataResolver.resolve(StopAiTaskCommand.class);
