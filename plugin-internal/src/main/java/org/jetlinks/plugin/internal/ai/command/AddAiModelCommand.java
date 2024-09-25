@@ -20,9 +20,8 @@ public class AddAiModelCommand extends AbstractConvertCommand<Mono<AiModelPortra
     }
 
     public void setModel(AiModelInfo model) {
-        this.readable().put("model", model);
+        this.writable().put("model", model);
     }
-
     public static FunctionMetadata metadata() {
         return CommandMetadataResolver.resolve(AddAiModelCommand.class);
     }
