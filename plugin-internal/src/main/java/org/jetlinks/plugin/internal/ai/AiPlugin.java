@@ -154,7 +154,7 @@ public abstract class AiPlugin extends AbstractPlugin {
                 .execute(new DownloadFileCommand().setUrl(info.getFileUrl()))
                 .map(ConverterUtils::convertDataBuffer)
                 .as(DataBufferUtils::join)
-                .map(DataBuffer::asInputStream);
+                .map(dataBuffer -> dataBuffer.asInputStream(true));
         }
 
         @Override
