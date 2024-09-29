@@ -100,7 +100,7 @@ public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
     void registerObjectDetectionCommand(BiFunction<ObjectDetectionCommand, CommandSupport, Flux<ObjectDetectionResult>> executor) {
         ObjectDetectionCommand command = new ObjectDetectionCommand();
         OUTPUT_METADATA_CACHE.put(generateMetadataKey(command.getCommandId(), AiOutputMetadataType.lightWeigh), getCommandOutputMetadata(ObjectDetectionCommand.class));
-        List<PropertyMetadata> flatMetadata = getClassMetadata(ResolvableType.forClass(ObjectDetectionResult.RuleData.class));
+        List<PropertyMetadata> flatMetadata = getClassMetadata(ResolvableType.forClass(ObjectDetectionResult.FlatData.class));
         OUTPUT_METADATA_CACHE.put(generateMetadataKey(command.getCommandId(), AiOutputMetadataType.flat), flatMetadata);
         OUTPUT_METADATA_CACHE.put(generateMetadataKey(command.getCommandId(), AiOutputMetadataType.lightWeighFlat), flatMetadata);
         registerHandler(ObjectDetectionCommand.class,
@@ -119,7 +119,7 @@ public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
     void registerImageRecognitionCommand(BiFunction<ImageRecognitionCommand, CommandSupport, Flux<ObjectDetectionResult>> executor) {
         ImageRecognitionCommand command = new ImageRecognitionCommand();
         OUTPUT_METADATA_CACHE.put(generateMetadataKey(command.getCommandId(), AiOutputMetadataType.lightWeigh), getCommandOutputMetadata(ImageRecognitionCommand.class));
-        List<PropertyMetadata> flatMetadata = getClassMetadata(ResolvableType.forClass(ObjectDetectionResult.RuleData.class));
+        List<PropertyMetadata> flatMetadata = getClassMetadata(ResolvableType.forClass(ObjectDetectionResult.FlatData.class));
         OUTPUT_METADATA_CACHE.put(generateMetadataKey(command.getCommandId(), AiOutputMetadataType.flat), flatMetadata);
         OUTPUT_METADATA_CACHE.put(generateMetadataKey(command.getCommandId(), AiOutputMetadataType.lightWeighFlat), flatMetadata);
         registerHandler(ImageRecognitionCommand.class,
