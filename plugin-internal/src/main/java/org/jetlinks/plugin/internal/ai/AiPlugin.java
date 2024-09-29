@@ -1,18 +1,11 @@
 package org.jetlinks.plugin.internal.ai;
 
 import lombok.AllArgsConstructor;
-import org.jetlinks.core.command.Command;
 import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.command.CommandSupport;
-import org.jetlinks.core.metadata.PropertyMetadata;
-import org.jetlinks.plugin.core.AbstractPlugin;
 import org.jetlinks.plugin.core.PluginContext;
-import org.jetlinks.plugin.internal.ai.command.AddAiModelCommand;
-import org.jetlinks.plugin.internal.ai.command.GetAiDomainCommand;
-import org.jetlinks.plugin.internal.ai.command.GetAiOutputConfigMetadataCommand;
-import org.jetlinks.plugin.internal.ai.command.RemoveAiModelCommand;
+import org.jetlinks.plugin.internal.ai.command.*;
 import org.jetlinks.sdk.server.SdkServices;
-import org.jetlinks.sdk.server.ai.AiCommand;
 import org.jetlinks.sdk.server.ai.AiCommandSupports;
 import org.jetlinks.sdk.server.ai.AiDomain;
 import org.jetlinks.sdk.server.ai.cv.ImageRecognitionCommand;
@@ -28,11 +21,7 @@ import reactor.core.publisher.Mono;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 /**
  * AI插件,提供AI相关能力.
@@ -43,12 +32,11 @@ import java.util.function.Function;
  * @see ImageRecognitionCommand
  * @since 1.0.3
  */
-public abstract class AiPlugin extends AbstractPlugin {
+public abstract class AiPlugin extends AbstractAiPluginCommandSupport {
 
     protected final CommandSupport modelManager;
     protected final CommandSupport fileService;
 
-    protected static Map<String, List<PropertyMetadata>> OUTPUT_METADATA_CACHE = new ConcurrentHashMap<>();
 
     public AiPlugin(String id, PluginContext context) {
         super(id, context);
@@ -77,9 +65,17 @@ public abstract class AiPlugin extends AbstractPlugin {
                             RemoveAiModelCommand::new
                         ));
 
-        registerHandler(GetAiOutputConfigMetadataCommand.class,
-                        GetAiOutputConfigMetadataCommand
-                            .createHandler(cmd -> getOutputMetadata(cmd.getCommandId(), cmd.getType())));
+        registerHandler(GetLightWeighMetadataCommand.class,
+                        GetLightWeighMetadataCommand
+                            .createHandler(cmd -> getOutputMetadata(cmd.getIdList(String::valueOf), AiOutputMetadataType.lightWeigh)));
+
+        registerHandler(GetFlatMetadataCommand.class,
+                        GetFlatMetadataCommand
+                            .createHandler(cmd -> getOutputMetadata(cmd.getIdList(String::valueOf), AiOutputMetadataType.flat)));
+
+        registerHandler(GetLightWeighFlatMetadataCommand.class,
+                        GetLightWeighFlatMetadataCommand
+                            .createHandler(cmd -> getOutputMetadata(cmd.getIdList(String::valueOf), AiOutputMetadataType.lightWeighFlat)));
 
     }
 
@@ -130,25 +126,6 @@ public abstract class AiPlugin extends AbstractPlugin {
                     .of(AiModelInfo.class)
                     .dsl(query -> query.in("id", id)))
             .map(AiModelImpl::new);
-    }
-
-    protected Flux<PropertyMetadata> getOutputMetadata(String commandId, GetAiOutputConfigMetadataCommand.Type type) {
-        return Mono
-            .fromCallable(() -> OUTPUT_METADATA_CACHE
-                .computeIfAbsent(commandId, key -> {
-                    Command<Object> command = createCommand(commandId);
-                    if (command.isWrapperFor(AiCommand.class)) {
-                        AiCommand<?> aiCommand = command.unwrap(AiCommand.class);
-                        switch (type) {
-                            case flat:
-                                return aiCommand.getFlatMapMetadata();
-                            case lightWeigh:
-                                return aiCommand.getLightWeighMapMetadata();
-                        }
-                    }
-                    return Collections.emptyList();
-                }))
-            .flatMapIterable(Function.identity());
     }
 
     @AllArgsConstructor
