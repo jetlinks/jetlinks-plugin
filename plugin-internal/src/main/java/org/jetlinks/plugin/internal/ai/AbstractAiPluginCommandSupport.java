@@ -32,10 +32,90 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
 
-    protected static Map<String, List<PropertyMetadata>> OUTPUT_METADATA_CACHE = new ConcurrentHashMap<>();
+    protected final Map<String, List<PropertyMetadata>> OUTPUT_METADATA_CACHE = new ConcurrentHashMap<>();
 
     public AbstractAiPluginCommandSupport(String id, PluginContext context) {
         super(id, context);
+    }
+
+
+    /**
+     * 注册自定义ai命令
+     *
+     * @param type                      ai命令类
+     * @param lightWeightProperties     轻量响应模型构建器
+     * @param flatProperties            平铺响应模型构建器
+     * @param flatLightWeightProperties 平铺轻量响应模型构建器
+     * @param handler                   命令执行器
+     * @param <C>                       ai命令
+     * @param <R>                       响应
+     */
+    protected <C extends Command<R>, R> void registerAiCommand(Class<C> type,
+                                                               AiOutputMetadataBuilder lightWeightProperties,
+                                                               AiOutputMetadataBuilder flatProperties,
+                                                               AiOutputMetadataBuilder flatLightWeightProperties,
+                                                               CommandHandler<C, R> handler) {
+        registerAiCommand(type,
+                          lightWeightProperties.generateMetadata(type),
+                          flatProperties.generateMetadata(type),
+                          flatLightWeightProperties.generateMetadata(type),
+                          handler);
+
+    }
+
+    /**
+     * 注册自定义ai命令，所有特殊响应默认使用轻量模型
+     */
+    protected <C extends Command<R>, R> void registerAiCommand(Class<C> type,
+                                                               AiOutputMetadataBuilder lightWeightProperties,
+                                                               CommandHandler<C, R> handler) {
+        Collection<PropertyMetadata> _lightWeightProperties = lightWeightProperties.generateMetadata(type);
+        registerAiCommand(type,
+                          _lightWeightProperties,
+                          _lightWeightProperties,
+                          _lightWeightProperties,
+                          handler);
+
+    }
+
+    /**
+     * 注册自定义ai命令，平铺轻量响应默认使用平铺模型
+     */
+    protected <C extends Command<R>, R> void registerAiCommand(Class<C> type,
+                                                               AiOutputMetadataBuilder lightWeightProperties,
+                                                               AiOutputMetadataBuilder flatProperties,
+                                                               CommandHandler<C, R> handler) {
+        Collection<PropertyMetadata> _lightWeightProperties = lightWeightProperties.generateMetadata(type);
+        Collection<PropertyMetadata> _flatProperties = flatProperties.generateMetadata(type);
+        registerAiCommand(type,
+                          _lightWeightProperties,
+                          _flatProperties,
+                          _flatProperties,
+                          handler);
+
+    }
+
+    /**
+     * 注册自定义ai命令
+     *
+     * @param type                      ai命令类
+     * @param lightWeightProperties     轻量响应模型
+     * @param flatProperties            平铺响应模型
+     * @param flatLightWeightProperties 平铺轻量响应模型
+     * @param handler                   命令执行器
+     * @param <C>                       ai命令
+     * @param <R>                       响应
+     */
+    protected <C extends Command<R>, R> void registerAiCommand(Class<C> type,
+                                                               Collection<PropertyMetadata> lightWeightProperties,
+                                                               Collection<PropertyMetadata> flatProperties,
+                                                               Collection<PropertyMetadata> flatLightWeightProperties,
+                                                               CommandHandler<C, R> handler) {
+        String commandId = handler.getMetadata().getId();
+        OUTPUT_METADATA_CACHE.put(generateMetadataKey(commandId, AiOutputMetadataType.lightWeigh), new ArrayList<>(lightWeightProperties));
+        OUTPUT_METADATA_CACHE.put(generateMetadataKey(commandId, AiOutputMetadataType.flat), new ArrayList<>(flatProperties));
+        OUTPUT_METADATA_CACHE.put(generateMetadataKey(commandId, AiOutputMetadataType.lightWeighFlat), new ArrayList<>(flatLightWeightProperties));
+        registerHandler(type, handler);
     }
 
 
@@ -52,43 +132,41 @@ public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
      * @param <R>                       响应
      */
     @SuppressWarnings("all")
-    <C extends Command<R>, R> void registerAiCommand(FunctionMetadata metadata,
-                                                     List<PropertyMetadata> lightWeightProperties,
-                                                     List<PropertyMetadata> flatProperties,
-                                                     List<PropertyMetadata> flatLightWeightProperties,
-                                                     BiFunction<C, CommandSupport, R> executor,
-                                                     Supplier<C> factory) {
-        C command = factory.get();
-        String commandId = factory.get().getCommandId();
-        OUTPUT_METADATA_CACHE.put(generateMetadataKey(commandId, AiOutputMetadataType.lightWeigh), lightWeightProperties);
-        OUTPUT_METADATA_CACHE.put(generateMetadataKey(commandId, AiOutputMetadataType.flat), flatProperties);
-        OUTPUT_METADATA_CACHE.put(generateMetadataKey(commandId, AiOutputMetadataType.lightWeighFlat), flatLightWeightProperties);
-        registerHandler((Class<C>) command.getClass(),
-                        CommandHandler.of(
-                            metadata,
-                            executor,
-                            factory
-                        ));
+    protected <C extends Command<R>, R> void registerAiCommand(FunctionMetadata metadata,
+                                                               Collection<PropertyMetadata> lightWeightProperties,
+                                                               Collection<PropertyMetadata> flatProperties,
+                                                               Collection<PropertyMetadata> flatLightWeightProperties,
+                                                               BiFunction<C, CommandSupport, R> executor,
+                                                               Supplier<C> factory) {
+        registerAiCommand((Class<C>) factory.get().getClass(),
+                          lightWeightProperties,
+                          flatProperties,
+                          flatLightWeightProperties,
+                          CommandHandler.of(
+                              metadata,
+                              executor,
+                              factory
+                          ));
     }
 
     /**
      * 注册自定义ai命令，所有特殊响应默认使用轻量模型
      */
-    <C extends Command<R>, R> void registerAiCommand(FunctionMetadata metadata,
-                                                     List<PropertyMetadata> lightWeightProperties,
-                                                     BiFunction<C, CommandSupport, R> executor,
-                                                     Supplier<C> factory) {
+    protected <C extends Command<R>, R> void registerAiCommand(FunctionMetadata metadata,
+                                                               Collection<PropertyMetadata> lightWeightProperties,
+                                                               BiFunction<C, CommandSupport, R> executor,
+                                                               Supplier<C> factory) {
         registerAiCommand(metadata, lightWeightProperties, lightWeightProperties, lightWeightProperties, executor, factory);
     }
 
     /**
      * 注册自定义ai命令，平铺轻量响应默认使用平铺模型
      */
-    <C extends Command<R>, R> void registerAiCommand(FunctionMetadata metadata,
-                                                     List<PropertyMetadata> lightWeightProperties,
-                                                     List<PropertyMetadata> flatProperties,
-                                                     BiFunction<C, CommandSupport, R> executor,
-                                                     Supplier<C> factory) {
+    protected <C extends Command<R>, R> void registerAiCommand(FunctionMetadata metadata,
+                                                               Collection<PropertyMetadata> lightWeightProperties,
+                                                               Collection<PropertyMetadata> flatProperties,
+                                                               BiFunction<C, CommandSupport, R> executor,
+                                                               Supplier<C> factory) {
         registerAiCommand(metadata, lightWeightProperties, flatProperties, flatProperties, executor, factory);
     }
 
@@ -97,7 +175,7 @@ public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
      *
      * @param executor 执行逻辑
      */
-    void registerObjectDetectionCommand(BiFunction<ObjectDetectionCommand, CommandSupport, Flux<ObjectDetectionResult>> executor) {
+    protected void registerObjectDetectionCommand(BiFunction<ObjectDetectionCommand, CommandSupport, Flux<ObjectDetectionResult>> executor) {
         ObjectDetectionCommand command = new ObjectDetectionCommand();
         OUTPUT_METADATA_CACHE.put(generateMetadataKey(command.getCommandId(), AiOutputMetadataType.lightWeigh), getCommandOutputMetadata(ObjectDetectionCommand.class));
         List<PropertyMetadata> flatMetadata = getClassMetadata(ResolvableType.forClass(ObjectDetectionResult.FlatData.class));
@@ -116,7 +194,7 @@ public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
      *
      * @param executor 执行逻辑
      */
-    void registerImageRecognitionCommand(BiFunction<ImageRecognitionCommand, CommandSupport, Flux<ObjectDetectionResult>> executor) {
+    protected void registerImageRecognitionCommand(BiFunction<ImageRecognitionCommand, CommandSupport, Flux<ObjectDetectionResult>> executor) {
         ImageRecognitionCommand command = new ImageRecognitionCommand();
         OUTPUT_METADATA_CACHE.put(generateMetadataKey(command.getCommandId(), AiOutputMetadataType.lightWeigh), getCommandOutputMetadata(ImageRecognitionCommand.class));
         List<PropertyMetadata> flatMetadata = getClassMetadata(ResolvableType.forClass(ObjectDetectionResult.FlatData.class));
@@ -134,7 +212,7 @@ public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
      * 获取命令的响应类型R为模型描述，扫描参数属性注释
      * <pre>{@code @Schema(title = "属性名")}</pre>
      */
-    <T extends Command<?>> List<PropertyMetadata> getCommandOutputMetadata(Class<T> aclass) {
+    protected static <T extends Command<?>> List<PropertyMetadata> getCommandOutputMetadata(Class<T> aclass) {
         ResolvableType responseDataType = CommandUtils.getCommandResponseDataType(aclass);
         return getClassMetadata(responseDataType);
     }
@@ -143,7 +221,7 @@ public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
      * 扫描类中参数属性注释
      * <pre>{@code @Schema(title = "属性名")}</pre>
      */
-    List<PropertyMetadata> getClassMetadata(ResolvableType responseDataType) {
+    protected static List<PropertyMetadata> getClassMetadata(ResolvableType responseDataType) {
         DataType dataType = MetadataUtils.parseType(responseDataType);
         if (dataType instanceof ObjectType) {
             return ((ObjectType) dataType).getProperties();
@@ -151,7 +229,7 @@ public abstract class AbstractAiPluginCommandSupport extends AbstractPlugin {
         return Collections.emptyList();
     }
 
-    static String generateMetadataKey(String commandId, AiOutputMetadataType type) {
+    protected static String generateMetadataKey(String commandId, AiOutputMetadataType type) {
         return String.join(":", commandId, type.name());
     }
 
