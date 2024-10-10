@@ -1,10 +1,16 @@
 package org.jetlinks.plugin.internal.ai;
 
 import lombok.AllArgsConstructor;
+import org.jetlinks.core.command.Command;
 import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.command.CommandSupport;
+import org.jetlinks.core.metadata.PropertyMetadata;
+import org.jetlinks.plugin.core.AbstractPlugin;
 import org.jetlinks.plugin.core.PluginContext;
-import org.jetlinks.plugin.internal.ai.command.*;
+import org.jetlinks.plugin.internal.ai.command.AddAiModelCommand;
+import org.jetlinks.plugin.internal.ai.command.GetAiDomainCommand;
+import org.jetlinks.plugin.internal.ai.command.GetAiOutputMetadataCommand;
+import org.jetlinks.plugin.internal.ai.command.RemoveAiModelCommand;
 import org.jetlinks.sdk.server.SdkServices;
 import org.jetlinks.sdk.server.ai.AiCommandSupports;
 import org.jetlinks.sdk.server.ai.AiDomain;
@@ -20,8 +26,8 @@ import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * AI插件,提供AI相关能力.
@@ -30,9 +36,10 @@ import java.util.Map;
  * @see org.jetlinks.sdk.server.ai.cv.ObjectDetectionCommand
  * @see org.jetlinks.sdk.server.ai.cv.PushMediaStreamCommand
  * @see ImageRecognitionCommand
+ * 使用{@link AICommandHandler}注册ai命令
  * @since 1.0.3
  */
-public abstract class AiPlugin extends AbstractAiPluginCommandSupport {
+public abstract class AiPlugin extends AbstractPlugin {
 
     protected final CommandSupport modelManager;
     protected final CommandSupport fileService;
@@ -65,17 +72,10 @@ public abstract class AiPlugin extends AbstractAiPluginCommandSupport {
                             RemoveAiModelCommand::new
                         ));
 
-        registerHandler(GetLightWeighMetadataCommand.class,
-                        GetLightWeighMetadataCommand
-                            .createHandler(cmd -> getOutputMetadata(cmd.getIdList(String::valueOf), AiOutputMetadataType.lightWeigh)));
 
-        registerHandler(GetFlatMetadataCommand.class,
-                        GetFlatMetadataCommand
-                            .createHandler(cmd -> getOutputMetadata(cmd.getIdList(String::valueOf), AiOutputMetadataType.flat)));
-
-        registerHandler(GetLightWeighFlatMetadataCommand.class,
-                        GetLightWeighFlatMetadataCommand
-                            .createHandler(cmd -> getOutputMetadata(cmd.getIdList(String::valueOf), AiOutputMetadataType.lightWeighFlat)));
+        registerHandler(GetAiOutputMetadataCommand.class,
+                        GetAiOutputMetadataCommand
+                            .createHandler(this::getAiOutputPropertyMetadata));
 
     }
 
@@ -126,6 +126,22 @@ public abstract class AiPlugin extends AbstractAiPluginCommandSupport {
                     .of(AiModelInfo.class)
                     .dsl(query -> query.in("id", id)))
             .map(AiModelImpl::new);
+    }
+
+    @SuppressWarnings("all")
+    private Mono<Map<String, List<PropertyMetadata>>> getAiOutputPropertyMetadata(GetAiOutputMetadataCommand cmd) {
+        List<String> idList = cmd.getIdList(String::valueOf);
+        return Flux
+            .fromIterable(idList)
+            .distinct()
+            .filter(command -> {
+                CommandHandler<Command<?>, ?> handler = handlers.get(command);
+                return handler instanceof AICommandHandler;
+            })
+            .collectMap(Function.identity(), command -> {
+                AICommandHandler<?, ?> aiHandler = (AICommandHandler<?, ?>) handlers.get(command);
+                return new ArrayList<>(aiHandler.getAiOutputPropertyMetadata(cmd.getType()));
+            });
     }
 
     @AllArgsConstructor

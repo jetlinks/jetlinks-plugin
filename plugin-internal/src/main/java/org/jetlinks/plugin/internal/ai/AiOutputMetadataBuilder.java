@@ -17,26 +17,82 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
+ * 模型输出属性模型构建器
+ * <pre>
+ * 将模型的输出属性模型转换为指定格式模型，如：
+ * 原有结构为
+ * {@code
+ * {
+ *     "a": 1,
+ *     "map": {
+ *         "b": 2,
+ *         "c": 3
+ *     },
+ *     "list": [
+ *         {
+ *             "d": 4，
+ *             "e": 5
+ *         },
+ *         {
+ *             "d": 4，
+ *             "e": 5
+ *         }
+ *     ]
+ * }
+ * }
+ * 1.配置{@code flatProperty("list").keepProperties(true)}则数据模型为
+ * {@code
+ * {
+ *     "a": 1,
+ *     "map": {
+ *         "b": 2,
+ *         "c": 3
+ *     },
+ *     "d": 4，
+ *     "e": 5
+ * }
+ * }
+ * 2.配置{@code includes("a")}则数据模型为
+ * {@code
+ * {
+ *     "a": 1
+ * }
+ * }
+ * 3.配置{@code excludes("map.b").excludes("list")}则数据模型为
+ * {@code
+ * {
+ *     "a": 1,
+ *     "map": {
+ *         "c": 3
+ *     }
+ * }
+ * }
+ *
+ * </pre>
+ *
  * @author gyl
  * @since 2.3
  */
 @Builder
 public class AiOutputMetadataBuilder {
 
-    @Schema(description = "平铺属性(List<Map>)，将集合内结构体平铺至外层")
+    @Schema(description = "平铺(List<Map>类型的)属性，将集合内结构体平铺至外层")
     private String flatProperty;
+
     @Builder.Default
-    @Schema(description = "平铺时是否保留其余属性")
+    @Schema(description = "平铺时是否保留外层属性")
     private boolean keepProperties = true;
-    @Schema(description = "包含属性（与排除属性不共存）")
+
+    @Schema(description = "保留属性（与移除属性不共存）")
     private Set<String> includes;
-    @Schema(description = "排除属性（与包含属性不共存），支持{key}.{key}格式排除结构体内部属性")
+
+    @Schema(description = "移除属性（与保留属性不共存），支持{key}.{key}格式移除结构体内部属性")
     private Set<String> excludes;
 
     // TODO: 2024/9/30 支持根据配置提供数据准换器？
 
     public <T extends Command<?>> Collection<PropertyMetadata> generateMetadata(Class<T> aclass) {
-        List<PropertyMetadata> src = AbstractAiPluginCommandSupport.getCommandOutputMetadata(aclass);
+        List<PropertyMetadata> src = AICommandHandler.getCommandOutputMetadata(aclass);
         return generateMetadata(src);
     }
 
