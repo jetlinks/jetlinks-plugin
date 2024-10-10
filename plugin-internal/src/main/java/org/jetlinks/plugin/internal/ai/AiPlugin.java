@@ -12,6 +12,7 @@ import org.jetlinks.plugin.internal.ai.command.GetAiDomainCommand;
 import org.jetlinks.plugin.internal.ai.command.GetAiOutputMetadataCommand;
 import org.jetlinks.plugin.internal.ai.command.RemoveAiModelCommand;
 import org.jetlinks.sdk.server.SdkServices;
+import org.jetlinks.sdk.server.ai.AICommandHandler;
 import org.jetlinks.sdk.server.ai.AiCommandSupports;
 import org.jetlinks.sdk.server.ai.AiDomain;
 import org.jetlinks.sdk.server.ai.cv.ImageRecognitionCommand;
@@ -36,7 +37,7 @@ import java.util.function.Function;
  * @see org.jetlinks.sdk.server.ai.cv.ObjectDetectionCommand
  * @see org.jetlinks.sdk.server.ai.cv.PushMediaStreamCommand
  * @see ImageRecognitionCommand
- * 使用{@link AICommandHandler}注册ai命令
+ * 使用{@link org.jetlinks.sdk.server.ai.AICommandHandler}注册ai命令
  * @since 1.0.3
  */
 public abstract class AiPlugin extends AbstractPlugin {
@@ -129,7 +130,7 @@ public abstract class AiPlugin extends AbstractPlugin {
     }
 
     @SuppressWarnings("all")
-    private Mono<Map<String, List<PropertyMetadata>>> getAiOutputPropertyMetadata(GetAiOutputMetadataCommand cmd) {
+    protected Mono<Map<String, List<PropertyMetadata>>> getAiOutputPropertyMetadata(GetAiOutputMetadataCommand cmd) {
         List<String> idList = cmd.getIdList(String::valueOf);
         return Flux
             .fromIterable(idList)

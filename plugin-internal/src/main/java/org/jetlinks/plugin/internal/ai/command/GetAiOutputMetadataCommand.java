@@ -8,7 +8,7 @@ import org.jetlinks.core.metadata.PropertyMetadata;
 import org.jetlinks.core.metadata.SimpleFunctionMetadata;
 import org.jetlinks.core.metadata.SimplePropertyMetadata;
 import org.jetlinks.core.metadata.types.StringType;
-import org.jetlinks.plugin.internal.ai.AiOutputMetadataType;
+import org.jetlinks.sdk.server.ai.AiOutputMetadataType;
 import org.jetlinks.sdk.server.commons.cmd.OperationByIdCommand;
 import reactor.core.publisher.Mono;
 
@@ -32,8 +32,8 @@ public class GetAiOutputMetadataCommand extends OperationByIdCommand<Mono<Map</*
         writable().put("type", type.name());
     }
 
-    public static CommandHandler<GetAiOutputMetadataCommand, Mono<Map</*命令id*/String, List<PropertyMetadata>>>>
-    createHandler(Function<GetAiOutputMetadataCommand, Mono<Map</*命令id*/String, List<PropertyMetadata>>>> handler) {
+    public static CommandHandler<GetAiOutputMetadataCommand, Mono<Map</*命令id*/String, List<PropertyMetadata>>>> createHandler
+        (Function<GetAiOutputMetadataCommand, Mono<Map</*命令id*/String, List<PropertyMetadata>>>> handler) {
         SimpleFunctionMetadata metadata = new SimpleFunctionMetadata();
         metadata.setId(CommandUtils.getCommandIdByType(GetAiOutputMetadataCommand.class));
         metadata.setName("获取ai输出指定类型配置定义");
