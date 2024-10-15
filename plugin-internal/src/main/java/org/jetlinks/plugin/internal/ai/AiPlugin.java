@@ -1,14 +1,18 @@
 package org.jetlinks.plugin.internal.ai;
 
 import lombok.AllArgsConstructor;
+import org.jetlinks.core.command.Command;
 import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.command.CommandSupport;
+import org.jetlinks.core.metadata.PropertyMetadata;
 import org.jetlinks.plugin.core.AbstractPlugin;
 import org.jetlinks.plugin.core.PluginContext;
 import org.jetlinks.plugin.internal.ai.command.AddAiModelCommand;
 import org.jetlinks.plugin.internal.ai.command.GetAiDomainCommand;
+import org.jetlinks.plugin.internal.ai.command.GetAiOutputMetadataCommand;
 import org.jetlinks.plugin.internal.ai.command.RemoveAiModelCommand;
 import org.jetlinks.sdk.server.SdkServices;
+import org.jetlinks.sdk.server.ai.AICommandHandler;
 import org.jetlinks.sdk.server.ai.AiCommandSupports;
 import org.jetlinks.sdk.server.ai.AiDomain;
 import org.jetlinks.sdk.server.ai.cv.ImageRecognitionCommand;
@@ -17,15 +21,14 @@ import org.jetlinks.sdk.server.ai.model.AiModelPortrait;
 import org.jetlinks.sdk.server.commons.cmd.QueryListCommand;
 import org.jetlinks.sdk.server.file.DownloadFileCommand;
 import org.jetlinks.sdk.server.utils.ConverterUtils;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * AI插件,提供AI相关能力.
@@ -34,12 +37,14 @@ import java.util.Map;
  * @see org.jetlinks.sdk.server.ai.cv.ObjectDetectionCommand
  * @see org.jetlinks.sdk.server.ai.cv.PushMediaStreamCommand
  * @see ImageRecognitionCommand
+ * 使用{@link org.jetlinks.sdk.server.ai.AICommandHandler}注册ai命令
  * @since 1.0.3
  */
 public abstract class AiPlugin extends AbstractPlugin {
 
     protected final CommandSupport modelManager;
     protected final CommandSupport fileService;
+
 
     public AiPlugin(String id, PluginContext context) {
         super(id, context);
@@ -67,6 +72,11 @@ public abstract class AiPlugin extends AbstractPlugin {
                             (cmd, that) -> removeModel(cmd.getId()),
                             RemoveAiModelCommand::new
                         ));
+
+
+        registerHandler(GetAiOutputMetadataCommand.class,
+                        GetAiOutputMetadataCommand
+                            .createHandler(this::getAiOutputPropertyMetadata));
 
     }
 
@@ -119,6 +129,21 @@ public abstract class AiPlugin extends AbstractPlugin {
             .map(AiModelImpl::new);
     }
 
+    @SuppressWarnings("all")
+    protected Mono<Map<String, List<PropertyMetadata>>> getAiOutputPropertyMetadata(GetAiOutputMetadataCommand cmd) {
+        List<String> idList = cmd.getIdList(String::valueOf);
+        return Flux
+            .fromIterable(idList)
+            .distinct()
+            .filter(command -> {
+                CommandHandler<Command<?>, ?> handler = handlers.get(command);
+                return handler instanceof AICommandHandler;
+            })
+            .collectMap(Function.identity(), command -> {
+                AICommandHandler<?, ?> aiHandler = (AICommandHandler<?, ?>) handlers.get(command);
+                return new ArrayList<>(aiHandler.getAiOutputPropertyMetadata(cmd.getType()));
+            });
+    }
 
     @AllArgsConstructor
     private class AiModelImpl implements AiModel {
