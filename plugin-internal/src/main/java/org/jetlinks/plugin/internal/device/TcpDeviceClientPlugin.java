@@ -213,7 +213,7 @@ public abstract class TcpDeviceClientPlugin extends DeviceGatewayPlugin {
 
         public abstract Mono<Void> downstream(DeviceMessage message);
 
-        protected final Mono<Void> upstream(DeviceMessage message) {
+        public final Mono<Void> upstream(DeviceMessage message) {
             if (message.getDeviceId() == null) {
                 message.thingId(DeviceThingType.device.getId(), deviceId);
             }
