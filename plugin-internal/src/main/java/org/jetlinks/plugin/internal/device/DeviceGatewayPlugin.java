@@ -87,10 +87,10 @@ public abstract class DeviceGatewayPlugin extends AbstractPlugin {
      * <p>
      * 保存后可通过{@link DeviceOperator#getConfig(String)}或者{@link DeviceOperator#getSelfConfig(String)}获取配置值
      *
-     * @param productId 产品ID
+     * @param deviceId 设备ID
      * @return ConfigMetadata
      */
-    public Mono<ConfigMetadata> getDeviceConfigMetadata(String productId) {
+    public Mono<ConfigMetadata> getDeviceConfigMetadata(String deviceId) {
         return Mono.empty();
     }
 
@@ -159,6 +159,17 @@ public abstract class DeviceGatewayPlugin extends AbstractPlugin {
     public Mono<Void> doOnDeviceRegister(DeviceOperator device) {
         return Mono.empty();
     }
+
+    /**
+     * 当平台的设备注销时调用
+     *
+     * @param device 设备操作接口
+     * @return 异步结果
+     */
+    public Mono<Void> doOnDeviceUnregister(DeviceOperator device) {
+        return Mono.empty();
+    }
+
 
     /**
      * 当平台的产品注册(保存)时调用

@@ -16,6 +16,7 @@
         <module>hc-net-sdk</module>
         <module>rule-engine-plugin</module>
         <module>mock-device-plugin</module>
+        <module>tcp-client-device</module>
     </modules>
 
 
