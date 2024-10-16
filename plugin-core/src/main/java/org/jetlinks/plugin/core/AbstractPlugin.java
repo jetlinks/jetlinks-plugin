@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
 
 @Slf4j
 public abstract class AbstractPlugin extends AbstractCommandSupport implements Plugin {
-    public static final AtomicReferenceFieldUpdater<AbstractPlugin, PluginState>
+    private static final AtomicReferenceFieldUpdater<AbstractPlugin, PluginState>
             STATE = AtomicReferenceFieldUpdater.newUpdater(AbstractPlugin.class, PluginState.class, "state");
 
     private final String id;

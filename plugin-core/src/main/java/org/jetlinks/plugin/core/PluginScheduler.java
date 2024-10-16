@@ -24,6 +24,13 @@ public interface PluginScheduler {
         return interval(name, job, cronExpression, true);
     }
 
+    /**
+     *
+     * @param name 任务名称,相同的任务请保证名称相同
+     * @param job 异步任务
+     * @param interval 间隔时间
+     * @return Disposable
+     */
     default Disposable interval(String name, Mono<Void> job, Duration interval) {
         return interval(name, job, interval, true);
     }
@@ -84,5 +91,6 @@ public interface PluginScheduler {
      * @return Disposable
      */
     Disposable delay(Mono<Void> job, Duration interval);
+
 
 }

@@ -161,6 +161,17 @@ public abstract class DeviceGatewayPlugin extends AbstractPlugin {
     }
 
     /**
+     * 当平台的设备注销时调用
+     *
+     * @param device 设备操作接口
+     * @return 异步结果
+     */
+    public Mono<Void> doOnDeviceUnregister(DeviceOperator device) {
+        return Mono.empty();
+    }
+
+
+    /**
      * 当平台的产品注册(保存)时调用
      *
      * @param product 产品操作接口
