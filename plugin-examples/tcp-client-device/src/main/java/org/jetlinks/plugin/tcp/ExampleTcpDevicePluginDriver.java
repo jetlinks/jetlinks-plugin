@@ -2,6 +2,7 @@ package org.jetlinks.plugin.tcp;
 
 import org.jetlinks.core.metadata.DefaultConfigMetadata;
 import org.jetlinks.core.metadata.types.BooleanType;
+import org.jetlinks.core.metadata.types.IntType;
 import org.jetlinks.plugin.core.Description;
 import org.jetlinks.plugin.core.PluginContext;
 import org.jetlinks.plugin.core.Version;
@@ -47,7 +48,7 @@ public class ExampleTcpDevicePluginDriver implements DeviceGatewayPluginDriver {
                 PLUGIN_CONFIG_METADATA,
                 new DefaultConfigMetadata()
                     .add("sortConnection", "是否短链接", BooleanType.GLOBAL)
-                    .add("maxRetryTimes", "最大重试次数", BooleanType.GLOBAL)
+                    .add("maxRetryTimes", "最大重试次数", IntType.GLOBAL)
             )
         );
     }
