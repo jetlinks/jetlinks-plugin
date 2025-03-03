@@ -202,8 +202,12 @@ public abstract class TcpDeviceClientPlugin extends DeviceGatewayPlugin {
             if (this.isDisposed() || parent.isSortConnection()) {
                 return;
             }
+            //超过重试次数
             if (parent.getMaxRetryTimes() > 0
                 && retryTimes++ >= parent.getMaxRetryTimes()) {
+                logger().warn("设备[{}]重试次数超过最大次数[{}]", deviceId, parent.getMaxRetryTimes());
+                dispose();
+                parent.clientCache.remove(deviceId);
                 return;
             }
             Mono.delay(Duration.ofMillis(retryTimes * 100L))
@@ -235,9 +239,13 @@ public abstract class TcpDeviceClientPlugin extends DeviceGatewayPlugin {
                         .port(port)
                 )
                 .doOnConnected(this::connected)
-                .doOnDisconnected(connection -> tryReconnect())
+                .doOnDisconnected(this::handleDisconnected)
                 .connect()
                 .cast(Connection.class);
+        }
+
+        protected void handleDisconnected(Connection connection) {
+            tryReconnect();
         }
 
         protected abstract TcpClient initClient(TcpClient client);

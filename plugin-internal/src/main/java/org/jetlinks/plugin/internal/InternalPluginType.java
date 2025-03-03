@@ -29,7 +29,12 @@ public enum InternalPluginType implements PluginType, I18nEnumDict<String> {
     /**
      * @see org.jetlinks.plugin.internal.ai.AiPlugin
      */
-    ai("AI");
+    ai("AI"),
+
+    /**
+     * @see org.jetlinks.plugin.internal.collector.DataCollectorPlugin
+     */
+    dataCollector("数据采集");
 
     private final String name;
 
