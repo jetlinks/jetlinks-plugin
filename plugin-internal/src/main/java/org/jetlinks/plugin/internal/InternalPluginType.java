@@ -7,6 +7,8 @@ import org.jetlinks.core.command.Command;
 import org.jetlinks.plugin.core.PluginContext;
 import org.jetlinks.plugin.core.PluginType;
 
+import java.util.Optional;
+
 @Getter
 @AllArgsConstructor
 public enum InternalPluginType implements PluginType, I18nEnumDict<String> {
@@ -34,7 +36,7 @@ public enum InternalPluginType implements PluginType, I18nEnumDict<String> {
     /**
      * @see org.jetlinks.plugin.internal.collector.DataCollectorPlugin
      */
-    dataCollector("数据采集");
+    collector("数据采集");
 
     private final String name;
 
@@ -52,4 +54,14 @@ public enum InternalPluginType implements PluginType, I18nEnumDict<String> {
     public String getText() {
         return getName();
     }
+
+    public static Optional<InternalPluginType> get(String id){
+        for (InternalPluginType value : values()) {
+            if (value.getId().equals(id)) {
+                return Optional.of(value);
+            }
+        }
+        return Optional.empty();
+    }
+
 }
