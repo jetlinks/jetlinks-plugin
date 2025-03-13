@@ -27,7 +27,7 @@ public interface PluginDriver extends CommandSupport, Wrapper {
     Description getDescription();
 
     /**
-     * @return 查询类型
+     * @return 插件类型
      */
     @Nonnull
     PluginType getType();
