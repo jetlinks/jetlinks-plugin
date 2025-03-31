@@ -9,6 +9,7 @@ import org.jetlinks.core.metadata.PropertyMetadata;
 import org.jetlinks.core.metadata.SimpleFunctionMetadata;
 import org.jetlinks.plugin.internal.device.Device;
 import org.hswebframework.web.api.crud.entity.PagerResult;
+import org.jetlinks.sdk.server.commons.cmd.QueryPagerCommand;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -21,7 +22,7 @@ import java.util.List;
  * @author zhouhao
  * @since 1.0
  */
-public class QueryDevicePageCommand extends AbstractCommand<Mono<PagerResult<Device>>, QueryDevicePageCommand> {
+public class QueryDevicePageCommand extends QueryPagerCommand<Device> {
 
     public String productId() {
         return (String) readable().get("productId");
@@ -29,7 +30,7 @@ public class QueryDevicePageCommand extends AbstractCommand<Mono<PagerResult<Dev
 
     //转换为通用查询条件
     public QueryParamEntity toQueryParam() {
-        return FastBeanCopier.copy(readable(), new QueryParamEntity());
+        return asQueryParam();
     }
 
     public static FunctionMetadata metadata(PropertyMetadata... terms) {
