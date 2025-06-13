@@ -26,14 +26,16 @@ public abstract class FunctionRuleEnginePlugin extends RuleEnginePlugin {
             .getInput()
             .accept(data -> data
                 .dataToMap()
-                .flatMap(map -> apply(data, map))
-                .flatMap(val -> {
+                .concatMap(map -> apply(data, map))
+                .concatMap(val -> {
                     RuleData ruleData = context.newRuleData(data, val);
                     return context
                         .fireEvent(RuleConstants.Event.result, ruleData)
                         .then(context.getOutput().write(ruleData));
                 })
                 .as(tracer)
+                // 捕获错误
+                .onErrorResume(err -> context.onError(err, data))
                 .then(Reactors.ALWAYS_TRUE));
     }
 
