@@ -42,6 +42,8 @@ import java.util.function.Function;
  */
 public abstract class AiPlugin extends AbstractPlugin {
 
+    public static final String STREAM_APP = "ai";
+
     protected final CommandSupport modelManager;
     protected final CommandSupport fileService;
 
