@@ -3,13 +3,11 @@ package org.jetlinks.plugin.mock;
 import com.google.common.collect.Maps;
 import io.netty.util.internal.ThreadLocalRandom;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.random.RandomDataGenerator;
 import org.hswebframework.web.api.crud.entity.PagerResult;
 import org.hswebframework.web.api.crud.entity.QueryParamEntity;
 import org.hswebframework.web.id.IDGenerator;
 import org.jetlinks.core.command.CommandHandler;
 import org.jetlinks.core.command.CommandUtils;
-import org.jetlinks.core.config.ConfigKey;
 import org.jetlinks.core.device.DeviceOperator;
 import org.jetlinks.core.device.DeviceState;
 import org.jetlinks.core.message.DeviceMessage;
@@ -71,7 +69,7 @@ public class MockDevicePlugin extends DeviceGatewayPlugin {
 
         for (int i = 0; i < e.getPageSize(); i++) {
             DeviceInfo inf = new DeviceInfo();
-            inf.setId("mock-device-" + offset + i);
+            inf.setId("mock-device-" + (offset + i));
             inf.setName("模拟设备_" + (offset + i));
             inf.setState(org.jetlinks.sdk.server.device.DeviceState.online);
 
@@ -101,7 +99,11 @@ public class MockDevicePlugin extends DeviceGatewayPlugin {
         }
         Map<String, Object> data = Maps.newHashMapWithExpectedSize(properties.size());
         for (PropertyMetadata property : properties) {
-            data.put(property.getId(), mockData(property.getValueType()));
+            String source = (String) property.getExpand("source").orElse(null);
+            if (source == null || "device".equals(source)) {
+                //属性来源不是设备的不模拟
+                data.put(property.getId(), mockData(property.getValueType()));
+            }
         }
 
         ReportPropertyMessage message = new ReportPropertyMessage();
@@ -109,7 +111,6 @@ public class MockDevicePlugin extends DeviceGatewayPlugin {
         message.setDeviceId(device.getDeviceId());
         return Flux.just(message);
     }
-
 
 
     @Override
