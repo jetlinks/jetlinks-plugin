@@ -1,6 +1,5 @@
 package org.jetlinks.plugin.internal.ai;
 
-import org.jetlinks.sdk.server.ai.InternalTaskTarget;
 import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
@@ -35,7 +34,7 @@ public interface AiModel {
      * 获取模型的任务目标
      *
      * @return 任务目标
-     * @see InternalTaskTarget
+     * @see org.jetlinks.sdk.server.ai.TaskTarget
      */
     String getTarget();
 
