@@ -1,12 +1,12 @@
 {
-  "name": "@jetlinks/external-plugin-sdk",
+  "name": "@jetlinks/plugin-nodejs",
   "version": "1.0.0-alpha.1",
-  "description": "Language-neutral JetLinks external plugin SDK for Node.js",
+  "description": "Transport-neutral JetLinks plugin SPI for Node.js",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/jetlinks/jetlinks-plugin.git",
-    "directory": "plugin-sdk-node"
+    "directory": "plugin-nodejs"
   },
   "type": "module",
   "engines": {
@@ -23,13 +23,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node --test test/*.test.mjs"
-  },
-  "dependencies": {
-    "rsocket-core": "^0.0.27",
-    "rsocket-flowable": "^0.0.27",
-    "rsocket-tcp-client": "^0.0.27",
-    "rsocket-tcp-server": "0.0.27"
+    "test": "npm run build && node --test test/*.test.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
