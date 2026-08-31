@@ -3,6 +3,8 @@ package org.jetlinks.plugin.core;
 import org.jetlinks.core.monitor.Monitor;
 
 import java.io.File;
+import java.util.Objects;
+import java.util.Map;
 
 /**
  * 插件运行上下文
@@ -11,6 +13,33 @@ import java.io.File;
  * @since 1.0
  */
 public interface PluginContext {
+
+    /**
+     * Returns a platform command service reference. The default implementation keeps local plugin
+     * contexts source-compatible; external runners override it with a generation-fenced bridge.
+     *
+     * @param serviceId canonical service id, optionally including a module (for example
+     *                 {@code deviceService:device})
+     * @return service reference
+     * @throws UnsupportedOperationException when the current runtime has no platform bridge
+     * @since 1.0
+     */
+    default PluginService service(String serviceId) {
+        Objects.requireNonNull(serviceId, "serviceId");
+        throw new UnsupportedOperationException("platform service is unavailable: " + serviceId);
+    }
+
+    /**
+     * Returns a service reference scoped to a dynamic platform resource. The target is kept
+     * separate from the canonical service id so the host can apply its normal authorization rules.
+     *
+     * @param serviceId canonical platform service id
+     * @param target dynamic resource scope, never a replacement for the service id
+     * @return target-scoped service reference
+     */
+    default PluginService service(String serviceId, Map<String, Object> target) {
+        return service(serviceId).target(target);
+    }
 
     /**
      * 插件注册中心,用于获取其他插件信息

@@ -1,41 +1,91 @@
 # @jetlinks/plugin-nodejs
 
-Node.js 24+ SPI for JetLinks plugins. The package contains only transport-neutral plugin contracts;
-the platform owns startup, authentication, resource limits and lifecycle supervision.
+Node.js 24+ transport-neutral SPI for JetLinks plugins. The platform owns startup,
+authentication, RSocket, resource limits and lifecycle supervision. A plugin only declares its
+manifest, business commands and the platform services it is allowed to call.
+
+## Minimal plugin
 
 ```ts
-import type { PluginDriver } from '@jetlinks/plugin-nodejs';
+import {command, definePlugin} from '@jetlinks/plugin-nodejs';
 
-export default function createDriver(): PluginDriver {
-  return {
-    description: {
-      id: 'example',
-      name: 'Example plugin',
-      type: 'standalone',
-      version: '1.0.0'
-    },
-    async createPlugin(pluginId, context) {
-      return {
-        id: pluginId,
-        type: 'example',
-        state: 'stopped',
-        async start() {
-          await context.monitor.event('plugin.started');
-        },
-        async pause() {},
-        async shutdown() {},
-        async execute(commandId, arguments_) {
-          return { commandId, arguments_ };
-        }
-      };
-    },
-    async execute(commandId, arguments_) {
-      return { commandId, arguments_ };
+export default definePlugin({
+  manifest: {
+    id: 'example',
+    name: 'Example plugin',
+    type: 'standalone'
+  },
+  commands: {
+    'system.health': command(async () => ({
+      status: 'UP',
+      uptime: process.uptime()
+    }))
+  }
+});
+```
+
+## Calling platform services
+
+Declare the service and command IDs in the manifest. The IDs are the platform command contract;
+the SDK does not rename commands or expose platform Java classes.
+
+```ts
+import {definePlugin, type ServiceCommand} from '@jetlinks/plugin-nodejs';
+
+interface DeviceService {
+  QueryList: ServiceCommand<{where?: string}, {id: string}>;
+  QueryById: ServiceCommand<{id: string}, {id: string} | undefined>;
+}
+
+export default definePlugin({
+  manifest: {
+    id: 'device-gateway',
+    name: 'Device gateway',
+    type: 'device',
+    requires: {
+      services: {
+        'deviceService:device': ['QueryList', 'QueryById']
+      }
     }
-  };
+  },
+  commands: {
+    'gateway.lookup': async (input, ctx) => {
+      const device = ctx.service<DeviceService>('deviceService:device');
+      return device.QueryById({id: input.id});
+    }
+  }
+});
+```
+
+Every service proxy also exposes the explicit, language-neutral form:
+
+```ts
+const device = ctx.service('deviceService:device');
+const item = await device.call('QueryById', {id: 'device-001'});
+
+for await (const item of device.QueryList.stream({where: 'productId is product-001'})) {
+  console.log(item);
 }
 ```
 
-The same SPI is used for `standalone`, `device` and `collector` profiles. Runtime adapters are
-deliberately not part of this package so that plugins can run in different deployment environments
-without changing business code.
+`device.QueryById(input)` is syntax sugar for `device.call('QueryById', input)`. Streaming commands
+use `AsyncIterable`, not RSocket or Reactor types. Cancellation and deadlines are passed through
+`AbortSignal` and `CallOptions`. Command IDs are the platform contract and are not renamed by the SDK.
+
+Dynamic resource scope is separate from the service ID and participates in platform authorization:
+
+```ts
+const channel = ctx.service('collectorService:channel', {
+  target: {channelId: 'channel-001'}
+});
+```
+
+Java plugins use the equivalent overload `context.service(serviceId, target)` or
+`context.service(serviceId).target(target)`; both preserve the same wire-level target metadata.
+
+Undeclared services and commands fail closed before a transport request is made. The platform
+performs the same allowlist, tenant/asset scope, generation, quota and audit checks at runtime.
+
+The same SPI supports `standalone`, `device` and `collector` profiles. Runtime adapters are
+deliberately not part of this package so plugin business code can run in attached processes or
+containers without changing its implementation.
