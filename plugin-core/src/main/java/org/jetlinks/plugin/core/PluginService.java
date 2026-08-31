@@ -15,6 +15,7 @@ import java.util.Map;
  *
  * @author zhouhao
  * @since 1.0
+ * @see ServiceRegistry
  */
 public interface PluginService {
 

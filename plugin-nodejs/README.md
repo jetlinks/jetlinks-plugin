@@ -80,8 +80,16 @@ const channel = ctx.service('collectorService:channel', {
 });
 ```
 
-Java plugins use the equivalent overload `context.service(serviceId, target)` or
-`context.service(serviceId).target(target)`; both preserve the same wire-level target metadata.
+Java plugins reuse the existing service registry and obtain the same neutral service reference:
+
+```java
+PluginService channel = context.services()
+    .getServiceNow(PluginService.class, "collectorService:channel")
+    .target(Map.of("channelId", "channel-001"));
+```
+
+Both languages preserve target as independent wire metadata rather than concatenating it into the
+service id. Node's `ctx.service(...)` remains language-level syntax sugar over this same contract.
 
 Undeclared services and commands fail closed before a transport request is made. The platform
 performs the same allowlist, tenant/asset scope, generation, quota and audit checks at runtime.
