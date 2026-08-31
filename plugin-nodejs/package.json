@@ -1,0 +1,32 @@
+{
+  "name": "@jetlinks/plugin-nodejs",
+  "version": "1.0.0-alpha.1",
+  "description": "Transport-neutral JetLinks plugin SPI for Node.js",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jetlinks/jetlinks-plugin.git",
+    "directory": "plugin-nodejs"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.3"
+  }
+}
