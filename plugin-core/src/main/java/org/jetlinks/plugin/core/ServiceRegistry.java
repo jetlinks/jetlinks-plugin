@@ -2,6 +2,8 @@ package org.jetlinks.plugin.core;
 
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -32,17 +34,37 @@ public interface ServiceRegistry {
     /**
      * 按类型和名称立即获取服务。
      *
-     * <p>外部插件使用 {@code PluginService.class + serviceId} 获取平台命令服务引用。
-     * 返回引用不代表命令已获授权，实际调用仍由平台按 context、generation 和 allowlist 校验。</p>
-     *
      * @param type 服务类型，不可为空
-     * @param name 服务名称；平台命令服务使用 canonical service id
+     * @param name 服务名称，不可为空
      * @param <T> 服务类型
      * @return 已注册的服务或受限服务代理
      * @throws UnsupportedOperationException 服务不存在时抛出
+     * @since 1.0.6
      */
     default <T> T getServiceNow(Class<T> type, String name) {
         return getService(type, name)
+                .orElseThrow(() -> new UnsupportedOperationException(
+                        "unsupported service:" + type.getSimpleName() + ":" + name));
+    }
+
+    /**
+     * 按类型、名称和解析参数立即获取服务。
+     *
+     * <p>解析参数用于创建带上下文的服务引用。默认实现仅兼容空参数；实现不支持非空参数时
+     * 必须返回空结果，不得静默忽略。</p>
+     *
+     * @param type 服务类型，不可为空
+     * @param name 服务名称，不可为空
+     * @param options 服务解析参数，不可为空
+     * @param <T> 服务类型
+     * @return 已注册的服务或受限服务代理
+     * @throws UnsupportedOperationException 服务不存在或不支持解析参数时抛出
+     * @since 1.0.6
+     */
+    default <T> T getServiceNow(Class<T> type,
+                                String name,
+                                Map<String, Object> options) {
+        return getService(type, name, options)
                 .orElseThrow(() -> new UnsupportedOperationException(
                         "unsupported service:" + type.getSimpleName() + ":" + name));
     }
@@ -65,6 +87,28 @@ public interface ServiceRegistry {
      * @return 服务；未注册时返回空
      */
     <T> Optional<T> getService(Class<T> type, String name);
+
+    /**
+     * 按类型、名称和解析参数查找服务。
+     *
+     * <p>默认实现只将空参数委托给具名查询。非空参数返回空结果，使旧实现保持二进制兼容，
+     * 同时避免调用方误以为解析参数已经生效。</p>
+     *
+     * @param type 服务类型，不可为空
+     * @param name 服务名称，不可为空
+     * @param options 服务解析参数，不可为空
+     * @param <T> 服务类型
+     * @return 服务；未注册或不支持解析参数时返回空
+     * @since 1.0.6
+     */
+    default <T> Optional<T> getService(Class<T> type,
+                                       String name,
+                                       Map<String, Object> options) {
+        Objects.requireNonNull(options, "options");
+        return options.isEmpty()
+                ? getService(type, name)
+                : Optional.empty();
+    }
 
     /**
      * 获取指定类型的全部已注册服务。

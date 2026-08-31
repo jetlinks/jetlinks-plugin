@@ -21,6 +21,23 @@ class ServiceRegistryTest {
                      () -> registry.getServiceNow(Object.class, "deviceService:gateway"));
     }
 
+    @Test
+    void shouldDelegateEmptyOptionsAndRejectUnsupportedOptions() {
+        Object expected = new Object();
+        ServiceRegistry registry = registry("deviceService:device", expected);
+
+        assertSame(expected,
+                   registry.getServiceNow(Object.class,
+                                          "deviceService:device",
+                                          Collections.emptyMap()));
+        assertThrows(UnsupportedOperationException.class,
+                     () -> registry.getServiceNow(Object.class,
+                                                  "deviceService:device",
+                                                  Collections.singletonMap(
+                                                      "target",
+                                                      Collections.singletonMap("id", "device-001"))));
+    }
+
     private static ServiceRegistry registry(String name, Object service) {
         return new ServiceRegistry() {
             @Override

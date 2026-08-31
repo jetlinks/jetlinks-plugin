@@ -80,16 +80,23 @@ const channel = ctx.service('collectorService:channel', {
 });
 ```
 
-Java plugins reuse the existing service registry and obtain the same neutral service reference:
+Java plugins reuse the existing service registry and platform `CommandSupport` contract:
 
 ```java
-PluginService channel = context.services()
-    .getServiceNow(PluginService.class, "collectorService:channel")
-    .target(Map.of("channelId", "channel-001"));
+CommandSupport channel = context.services()
+    .getServiceNow(
+        CommandSupport.class,
+        "collectorService:channel",
+        Collections.singletonMap(
+            "target",
+            Collections.singletonMap("channelId", "channel-001")
+        )
+    );
 ```
 
 Both languages preserve target as independent wire metadata rather than concatenating it into the
-service id. Node's `ctx.service(...)` remains language-level syntax sugar over this same contract.
+service id. Node's `ctx.service(...)` is the idiomatic Node API; Java keeps the existing
+`PluginContext.services()` and `CommandSupport` API instead of defining a parallel service facade.
 
 Undeclared services and commands fail closed before a transport request is made. The platform
 performs the same allowlist, tenant/asset scope, generation, quota and audit checks at runtime.
